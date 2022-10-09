@@ -18,13 +18,13 @@ Script for new server including
 # Installation
 1. run command
 ```bash
-$ wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/actions.sh
+wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/actions.sh
 ```
 2. make the file executable
 ```bash
-$ chmod +x actions.sh
+chmod +x actions.sh
 ```
 3. excute with sudo privileges
 ```bash
-$ sudo ./actions.sh
+sudo ./actions.sh
 ```
