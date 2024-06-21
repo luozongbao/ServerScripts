@@ -4,7 +4,7 @@
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
 if [[ $# != 2 ]]
 then
-  echo "backup.sh target_directory_name destination_directory_name"
+  echo "backupwp.sh target_directory_name destination_directory_name"
   exit
 fi
 
