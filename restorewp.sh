@@ -27,16 +27,17 @@ destinationPath=$2
 DBUser=$3
 DBPass=$4
 originPath=$(pwd)
-archiveFileName=$(basename $fullArchiveFile)
 archivePath=$(dirname $fullArchiveFile)
+archiveFileName=$(basename $fullArchiveFile)
 originalFolder=$(basename $(echo $archiveFileName | cut -d "-" -f2) .zip)
-WPCONFIG="$archivePath/$originalFolder/wp-config.php"
 cd $destinationPath
 destinationPath=$(pwd)
 cd $originPath
+cd $archivePath
+archivePath=$(pwd)
+WPCONFIG="$archivePath/$originalFolder/wp-config.php"
 
 echo "Extracting file $archiveFileName"
-cd $archivePath
 unzip -o -q  $archiveFileName
 
 if [[ ! $? == 0 ]]
@@ -67,6 +68,14 @@ mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while creating database user"
+  exit
+fi
+
+echo "Granting permission to $DBName to database user: $DBUser"
+mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;"
+if [[ ! $? == 0 ]]
+then
+  echo "Error occor while granting permission to $DBName"
   exit
 fi
 
