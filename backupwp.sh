@@ -44,8 +44,8 @@ fi
 # generate timestamp
 currentTS=$(date +%Y%m%d%H%M)
 
-# backup directory name
-backupDirectoryName=$( echo $targetDirectory | rev | cut -d "/" -f1 | rev)
+# get Backup Directory Name
+backupDirectoryName=$( echo $targetPath | rev | cut -d "/" -f1 | rev)
 
 # generate backup file name
 backupFileName="${currentTS}-$backupDirectoryName.zip"
@@ -60,11 +60,27 @@ echo "Exporting Database ..."
 # Export Database to file
 mysqldump -u root $DBName > "${DBName}.sql" 
 
+if [ ! $? == 0 ]
+then
+  echo "Error occur at mysql dumping database ${DBName} to file ${DBName}.sql"
+  exit 
+fi
+
+echo "mysql dumping database ${DBName} to file ${DBName}.sql: Done"
+
 # zip entire directory
 
-echo "Compressing and Archiving files"
+echo "Compressing and Archiving files to $backupFileName"
 
-zip -r $backupFileName $backupDirectoryName "${DBName}.sql"
+zip -r -q $backupFileName $backupDirectoryName "${DBName}.sql"
+
+if [ ! $? == 0 ]
+then
+  echo "Error occur compressing backup to file $backupFileName"
+  exit 
+fi
+
+echo "Backup compressed to $backupFileName: Done"
 
 # Move to Destination Path
 
@@ -73,7 +89,10 @@ mv $backupFileName $destinationPath
 # Congratulations! You completed the final project for this course!
 
 # remove zipped database file
-rm "${DBNAME}.sql"
+rm "${DBName}.sql"
+
+echo -e "\nbackup file located at $destinationPath/$backupFileName"
+echo "All backup process done"
 
 
 
