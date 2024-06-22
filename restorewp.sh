@@ -87,6 +87,22 @@ then
   exit
 fi
 
+echo "Configuring database username in wp-config.html"
+sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG 
+if [[ ! $? == 0 ]]
+then
+  echo "Error occor while configuring database username"
+  exit
+fi
+
+echo "Configuring database password in wp-config.html"
+sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG
+if [[ ! $? == 0 ]]
+then
+  echo "Error occor while configuring database password"
+  exit
+fi
+
 echo "removing $DBName.sql and moving $originalFolder to $destinationPath"
 rm ${DBName}.sql
 mv $originalFolder $destinationPath
