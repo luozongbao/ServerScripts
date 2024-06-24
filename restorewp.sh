@@ -4,7 +4,7 @@
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
 if [[ !  ($# == 2 || $# == 4) ]]
 then
-  echo -e "restorewp.sh [archive_file] [destination] \nrestorewp.sh [archive_file] [destination] [dbuser] [dbpassword]"
+  echo -e "Using original database username and password: restorewp.sh [archive_file] [destination] \ndefine new database username and password: restorewp.sh [archive_file] [destination] [dbuser] [dbpassword]"
   exit
 fi
 
@@ -37,7 +37,7 @@ archivePath=$(pwd)
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName
 mv $originalFolder $destinationPath
-echo "Place folder to $destinationPath"
+echo "$originalFolder moved to $destinationPath"
 WPCONFIG="$destinationPath/$originalFolder/wp-config.php"
 
 # Check extracting archive
