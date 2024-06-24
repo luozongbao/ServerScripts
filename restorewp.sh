@@ -2,9 +2,9 @@
 
 # This checks if the number of arguments is correct
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
-if [[ $# != 4 ]]
+if [[ !  ($# == 2 || $# == 4) ]]
 then
-  echo "restorewp.sh [archive_file] [destination] [DBUser] [DBPassword]"
+  echo -e "restorewp.sh [archive_file] [destination] \nrestorewp.sh [archive_file] [destination] [dbuser] [dbpassword]"
   exit
 fi
 
@@ -24,8 +24,6 @@ fi
 
 fullArchiveFile=$1
 destinationPath=$2
-DBUser=$3
-DBPass=$4
 originPath=$(pwd)
 archivePath=$(dirname $fullArchiveFile)
 archiveFileName=$(basename $fullArchiveFile)
@@ -35,25 +33,47 @@ destinationPath=$(pwd)
 cd $originPath
 cd $archivePath
 archivePath=$(pwd)
-WPCONFIG="$archivePath/$originalFolder/wp-config.php"
 
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName
+mv $originalFolder $destinationPath
+echo "Place folder to $destinationPath"
+WPCONFIG="$destinationPath/$originalFolder/wp-config.php"
 
+# Check extracting archive
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while extracting file"
   exit
 fi
 
+# check if extracted archive is a wordpress archive
 if [[ ! -e $WPCONFIG ]]
 then
   echo "Could not find wp-config.php"
   exit
 fi
 
+# acquire databasename
 DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
 
+if [[ $# == 2 ]]
+then
+  # acquire database username
+  DBUser=$(cat $WPCONFIG | grep DB_USER | cut -d \' -f 4)
+else
+  DBUser=$3
+fi
+
+if [[ $# == 2 ]]
+then
+  # acquire database user password
+  DBPass=$(cat $WPCONFIG | grep DB_PASSWORD | cut -d \' -f 4)
+else
+  DBPass=$4
+fi
+
+# Create database
 echo "Creating database $DBName"
 mysql -u root -e "CREATE DATABASE $DBName;"
 if [[ ! $? == 0 ]]
@@ -62,6 +82,7 @@ then
   exit
 fi
 
+# Create username
 echo "Creating database user: $DBUser"
 mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';"
 
@@ -71,6 +92,7 @@ then
   exit
 fi
 
+# Grant permisssion to the database
 echo "Granting permission to $DBName to database user: $DBUser"
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;"
 if [[ ! $? == 0 ]]
@@ -79,6 +101,7 @@ then
   exit
 fi
 
+# Import database
 echo "Importing Database"
 mysql -u $DBUser --password="$DBPass" $DBName < ${DBName}.sql
 if [[ ! $? == 0 ]]
@@ -87,25 +110,31 @@ then
   exit
 fi
 
-echo "Configuring database username in wp-config.html"
-sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG 
-if [[ ! $? == 0 ]]
+if [ $# == 4 ]
 then
-  echo "Error occor while configuring database username"
-  exit
+  echo "Configuring database username in wp-config.html"
+  sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG 
+  if [[ ! $? == 0 ]]
+  then
+    echo "Error occor while configuring database username"
+    exit
+  fi
 fi
 
-echo "Configuring database password in wp-config.html"
-sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG
-if [[ ! $? == 0 ]]
+if [ $# == 4 ]
 then
-  echo "Error occor while configuring database password"
-  exit
+  echo "Configuring database password in wp-config.html"
+  sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG
+  if [[ ! $? == 0 ]]
+  then
+    echo "Error occor while configuring database password"
+    exit
+  fi
 fi
 
-echo "removing $DBName.sql and moving $originalFolder to $destinationPath"
+echo "removing $DBName.sql"
 rm ${DBName}.sql
-mv $originalFolder $destinationPath
+
 
 
 
