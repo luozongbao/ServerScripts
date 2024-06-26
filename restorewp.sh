@@ -27,7 +27,7 @@ destinationPath=$2
 originPath=$(pwd)
 archivePath=$(dirname $fullArchiveFile)
 archiveFileName=$(basename $fullArchiveFile)
-originalFolder=$(basename $(echo $archiveFileName | cut -d "-" -f2) .zip)
+
 cd $destinationPath
 destinationPath=$(pwd)
 cd $originPath
@@ -36,10 +36,6 @@ archivePath=$(pwd)
 
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName
-mv $originalFolder $destinationPath
-echo "$originalFolder moved to $destinationPath"
-WPCONFIG="$destinationPath/$originalFolder/wp-config.php"
-
 # Check extracting archive
 if [[ ! $? == 0 ]]
 then
@@ -48,11 +44,18 @@ then
 fi
 
 # check if extracted archive is a wordpress archive
+WPCONFIG=$(find . | grep "/wp-config.php")
 if [[ ! -e $WPCONFIG ]]
 then
   echo "Could not find wp-config.php"
   exit
 fi
+
+wordpressFolder=$(dirname $WPCONFIG | rev | cut -d "/" -f 1 | rev)
+
+mv $wordpressFolder $destinationPath
+echo "$wordpressFolder moved to $destinationPath"
+WPCONFIG="$destinationPath/$wordpressFolder/wp-config.php"
 
 # acquire databasename
 DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
