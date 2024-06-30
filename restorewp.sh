@@ -46,8 +46,11 @@ originPath=$(pwd)
 archivePath=$(dirname $fullArchiveFile)
 archiveFileName=$(basename $fullArchiveFile)
 
+# get destination full path
 cd $destinationPath
 destinationPath=$(pwd)
+
+# get archive full path
 cd $originPath
 cd $archivePath
 archivePath=$(pwd)
@@ -56,7 +59,12 @@ archivePath=$(pwd)
 dbFile=$(unzip -l $archiveFileName | grep .sql | grep -oP '\S+\.sql$') 2>> "error.log"
 if [[ -z $dbFile ]]
 then
-  echo "could not open $archiveFileName"
+  if [[ $? == 0 ]]
+  then
+    echo "Archive does not include database dump file"
+  else
+    echo "could not open $archiveFileName"
+  fi
   exit
 fi
 
@@ -64,7 +72,12 @@ fi
 WPCONFIG=$(unzip -l $archiveFileName | grep "/wp-config.php") 2>> "error.log"
 if [[ -z $WPCONFIG ]]
 then
-  echo "Could not find wp-config.php"
+  if [[ $? == 0 ]]
+  then
+    echo "Could not find wp-config.php"
+  else
+    echo "could not open $archiveFileName"
+  fi
   exit
 fi
 
