@@ -51,26 +51,34 @@ cd $originPath
 cd $archivePath
 archivePath=$(pwd)
 
+# get archive database dump file name
+dbFile=$(unzip -l $fullArchiveFile | grep .sql | grep -oP '\S+\.sql$')
+
+# check if extracted archive is a wordpress archive
+WPCONFIG=$(unzip -l $fullArchiveFile | grep "/wp-config.php")
+if [[ -z $WPCONFIG ]]
+then
+  echo "Could not find wp-config.php"
+  exit
+fi
+
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName
-# Check extracting archive
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while extracting file"
   exit
 fi
 
-# check if extracted archive is a wordpress archive
-WPCONFIG=$(find . | grep "/wp-config.php")
-if [[ ! -e $WPCONFIG ]]
+wordpressFolder=$(echo $WPCONFIG | grep -oP "\S+\/")
+
+mv $wordpressFolder $destinationPath
+if [[ ! $? == 0 ]]
 then
-  echo "Could not find wp-config.php"
+  echo "Error occor while moving $wordpressFolder to $destinationPath"
   exit
 fi
 
-wordpressFolder=$(dirname $WPCONFIG | rev | cut -d "/" -f 1 | rev)
-
-mv $wordpressFolder $destinationPath
 echo "$wordpressFolder moved to $destinationPath"
 WPDIR="$destinationPath/$wordpressFolder/"
 WPCONFIG="$destinationPath/$wordpressFolder/wp-config.php"
@@ -129,16 +137,17 @@ fi
 
 # Import database
 echo "Importing Database"
-mysql -u $DBUser --password="$DBPass" $DBName < ${DBName}.sql
+mysql -u $DBUser --password="$DBPass" $DBName < $dbFile
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while importing database $DBName"
   exit
 fi
 
-if [ $# == 4 ]
+# Configure database username in wp-config.php
+if [[ ($# == 4 || $# == 5) ]]
 then
-  echo "Configuring database username in wp-config.html"
+  echo "Configuring database username in wp-config.php"
   sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG 
   if [[ ! $? == 0 ]]
   then
@@ -147,9 +156,10 @@ then
   fi
 fi
 
-if [ $# == 4 ]
+# Configure database password in wp-config.php
+if [[ ($# == 4 || $# == 5) ]]
 then
-  echo "Configuring database password in wp-config.html"
+  echo "Configuring database password in wp-config.php"
   sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG
   if [[ ! $? == 0 ]]
   then
@@ -158,8 +168,8 @@ then
   fi
 fi
 
-echo "removing $DBName.sql"
-rm ${DBName}.sql
+echo "removing $dbFile"
+rm $dbFile
 
 # Configure Site URL
 # Get current site URL
