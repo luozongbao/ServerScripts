@@ -68,6 +68,7 @@ then
   exit
 fi
 
+# Extracting file
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName 2>> "error.log"
 if [[ ! $? == 0 ]]
@@ -78,6 +79,7 @@ fi
 
 wordpressFolder=$(echo $WPCONFIG | grep -oP "\S+\/")
 
+# Move folder to destination Path
 mv $wordpressFolder $destinationPath 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
@@ -110,6 +112,7 @@ elif [[ ($# == 4 || $# == 5) ]]
 then
   DBPass=$4
 fi
+
 # acquire database Prefix
 DBPREFIX=$(cat $WPCONFIG | grep "\$table_prefix" | cut -d \' -f 2)
 
@@ -207,7 +210,16 @@ then
   fi
 fi
 
-
+# Remove empty error log file
+if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
+then
+  rm error.log
+  if [[ ! $? == 0 ]]
+  then
+    echo "Error occor while removing error.log"
+    exit
+  fi
+fi
 
 
 
