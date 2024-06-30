@@ -32,8 +32,6 @@ then
     echo "Couldn't perform url change since wp-cli has not been installed"
     exit 
   fi
-  if [[ ($# == 3) ]]; then newURL=$3; fi
-  if [[ ($# == 5) ]]; then newURL=$5; fi
 fi
 
 
@@ -216,15 +214,17 @@ originalURL=$(mysql -u $DBUser $DBName -p$DBPass -e "$QUERY")  2>> "error.log"
 originalURL=$(echo $originalURL | grep -oP '\s(.*)$')
 echo "current site url is: $originalURL"
 
-if [[ ($# == 3 || $# == 5) ]]
+if [[ ($# == 3) ]]; then newURL=$3; fi
+if [[ ($# == 5) ]]; then newURL=$5; fi
+if [[ ! -z $newURL ]]
 then
   wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
-  if [[ ! $? == 0 ]]
+  if [[ $? == 0 ]]
   then
+    echo "site url changed to $newURL"
+  else 
     echo "Error occor while configuring site url"
     exit
-  else 
-    echo "site url changed to $newURL"
   fi
 fi
 
