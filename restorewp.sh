@@ -18,10 +18,10 @@ fi
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
 if [[ ( $# < 2 || $# > 5 ) ]]
 then
-  echo -e "restorewp.sh [archive_file] [destination]"
-  echo -e "restorewp.sh [archive_file] [destination] [newsiteurl]"
-  echo -e "restorewp.sh [archive_file] [destination] [dbuser] [dbpassword]"
-  echo -e "restorewp.sh [archive_file] [destination] [dbuser] [dbpassword] [newsiteurl]"
+  echo -e "Extract archive to destination using same database information.\n\trestorewp.sh [archive_file] [destination]\n"
+  echo -e "Extract archive to destination using same database information then update site url.\n\trestorewp.sh [archive_file] [destination] [newsiteurl]\n"
+  echo -e "Extract archive to destination update database username and password.\n\trestorewp.sh [archive_file] [destination] [dbuser] [dbpassword]\n"
+  echo -e "Extract archive to destination update database username and password then update site url\n\trestorewp.sh [archive_file] [destination] [dbuser] [dbpassword] [newsiteurl]\n"
   exit
 fi
 
