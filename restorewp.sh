@@ -53,10 +53,15 @@ cd $archivePath
 archivePath=$(pwd)
 
 # get archive database dump file name
-dbFile=$(unzip -l $fullArchiveFile | grep .sql | grep -oP '\S+\.sql$')
+dbFile=$(unzip -l $archiveFileName | grep .sql | grep -oP '\S+\.sql$') 2>> "error.log"
+if [[ -z $dbFile ]]
+then
+  echo "could not open $archiveFileName"
+  exit
+fi
 
 # check if extracted archive is a wordpress archive
-WPCONFIG=$(unzip -l $fullArchiveFile | grep "/wp-config.php")
+WPCONFIG=$(unzip -l $archiveFileName | grep "/wp-config.php") 2>> "error.log"
 if [[ -z $WPCONFIG ]]
 then
   echo "Could not find wp-config.php"
@@ -64,7 +69,7 @@ then
 fi
 
 echo "Extracting file $archiveFileName"
-unzip -o -q  $archiveFileName
+unzip -o -q  $archiveFileName 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while extracting file"
@@ -73,7 +78,7 @@ fi
 
 wordpressFolder=$(echo $WPCONFIG | grep -oP "\S+\/")
 
-mv $wordpressFolder $destinationPath
+mv $wordpressFolder $destinationPath 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while moving $wordpressFolder to $destinationPath"
@@ -110,7 +115,7 @@ DBPREFIX=$(cat $WPCONFIG | grep "\$table_prefix" | cut -d \' -f 2)
 
 # Create database
 echo "Creating database $DBName"
-mysql -u root -e "CREATE DATABASE $DBName;"
+mysql -u root -e "CREATE DATABASE $DBName;" 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while creating database"
@@ -119,8 +124,7 @@ fi
 
 # Create username
 echo "Creating database user: $DBUser"
-mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';"
-
+mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';" 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while creating database user"
@@ -129,7 +133,7 @@ fi
 
 # Grant permisssion to the database
 echo "Granting permission to $DBName to database user: $DBUser"
-mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;"
+mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;" 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while granting permission to $DBName"
@@ -138,7 +142,7 @@ fi
 
 # Import database
 echo "Importing Database"
-mysql -u $DBUser --password="$DBPass" $DBName < $dbFile
+mysql -u $DBUser --password="$DBPass" $DBName < $dbFile 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
   echo "Error occor while importing database $DBName"
@@ -149,7 +153,7 @@ fi
 if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database username in wp-config.php"
-  sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG 
+  sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG  2>> "error.log"
   if [[ ! $? == 0 ]]
   then
     echo "Error occor while configuring database username"
@@ -161,7 +165,7 @@ fi
 if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database password in wp-config.php"
-  sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG
+  sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG 2>> "error.log"
   if [[ ! $? == 0 ]]
   then
     echo "Error occor while configuring database password"
@@ -170,13 +174,18 @@ then
 fi
 
 echo "removing $dbFile"
-rm $dbFile
+rm $dbFile 2>> "error.log"
+if [[ ! $? == 0 ]]
+then
+  echo "Error occor while removing $dbFile"
+  exit
+fi
 
 # Configure Site URL
 # Get current site URL
 #originalURL=$(sudo wp option get siteurl --path=$WPDIR --allow-root)
 QUERY="SELECT option_value FROM ${DBPREFIX}options WHERE option_id=1;"
-originalURL=$(mysql -u $DBUser $DBName -p$DBPass -e "$QUERY")
+originalURL=$(mysql -u $DBUser $DBName -p$DBPass -e "$QUERY")  2>> "error.log"
 originalURL=$(echo $originalURL | grep -oP '\s(.*)$')
 echo "current site url is: $originalURL"
 
@@ -186,7 +195,7 @@ then
   then
     if [[ ($# == 3) ]]; then newURL=$3; fi
     if [[ ($# == 5) ]]; then newURL=$5; fi
-    wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root
+    wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
     if [[ ! $? == 0 ]]
     then
       echo "Error occor while configuring site url"
