@@ -25,6 +25,17 @@ then
   exit
 fi
 
+if [[ ($# == 3 || $# == 5) ]]
+then
+  if [[ -z $(ls /usr/local/bin/ | grep -E "^wp$") ]]
+  then
+    echo "Couldn't perform url change since wp-cli has not been installed"
+    exit 
+  fi
+  if [[ ($# == 3) ]]; then newURL=$3; fi
+  if [[ ($# == 5) ]]; then newURL=$5; fi
+fi
+
 
 # This checks if argument 1 and argument 2 are valid directory paths
 if [[ ! -f $1 ]] 
@@ -205,21 +216,15 @@ originalURL=$(mysql -u $DBUser $DBName -p$DBPass -e "$QUERY")  2>> "error.log"
 originalURL=$(echo $originalURL | grep -oP '\s(.*)$')
 echo "current site url is: $originalURL"
 
-if [[ ! -z $(ls /usr/local/bin/ | grep -E "^wp$") ]]
+if [[ ($# == 3 || $# == 5) ]]
 then
-  if [[ ($# == 3 || $# == 5) ]]
+  wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
+  if [[ ! $? == 0 ]]
   then
-    if [[ ($# == 3) ]]; then newURL=$3; fi
-    if [[ ($# == 5) ]]; then newURL=$5; fi
-    wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
-    if [[ ! $? == 0 ]]
-    then
-      echo "Error occor while configuring site url"
-      exit
-    else 
-      echo "site url changed to $newURL"
-    fi
-
+    echo "Error occor while configuring site url"
+    exit
+  else 
+    echo "site url changed to $newURL"
   fi
 fi
 
