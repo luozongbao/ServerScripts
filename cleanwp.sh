@@ -39,8 +39,22 @@ do
         [yY]|[yY][eE][sS])
             # Drop database
             mysql -u root -e "DROP DATABASE $DBName;"
+            if [[ $? == 0 ]]
+            then
+                echo "Database $DBName dropped: DONE"
+            else
+                echo "Error occur while dropping database $DBName"
+                exit
+            fi
             # drop database user
             mysql -u root -e "DROP USER $DBUser;"
+            if [[ $? == 0 ]]
+            then
+                echo "Database user $DBUser dropped: DONE"
+            else
+                echo "Error occur while dropping database user $DBUser"
+                exit
+            fi
             break
             ;;
         [nN]|[nN][oO])
@@ -61,6 +75,13 @@ do
             cd $wpPath
             cd ..
             rm -r $wpPath 
+            if [[ $? == 0 ]]
+            then
+                echo "Directory $wpPath deleted: DONE"
+            else
+                echo "Error occur while deleting path $wpPath"
+                exit
+            fi
             break
             ;;
         [nN]|[nN][oO])

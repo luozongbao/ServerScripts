@@ -40,6 +40,12 @@ then
   exit
 fi
 
+# acquire database username
+DBUser=$(cat $WPCONFIG | grep DB_USER | cut -d \' -f 4)
+# acquire database user password
+DBPass=$(cat $WPCONFIG | grep DB_PASSWORD | cut -d \' -f 4)
+# Retrieve Database Name
+DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
 
 # generate timestamp
 currentTS=$(date +%Y%m%d%H%M)
@@ -52,14 +58,12 @@ backupFileName="${currentTS}-$backupDirectoryName.zip"
 
 
 
-# Retrieve Database Name
-DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
+
 
 echo "Exporting Database ..."
 
 # Export Database to file
-mysqldump -u root $DBName > "${DBName}.sql" 
-
+mysqldump -u $DBUser $DBName --password="$DBPass" > "${DBName}.sql" 
 if [ ! $? == 0 ]
 then
   echo "Error occur at mysql dumping database ${DBName} to file ${DBName}.sql"
@@ -73,7 +77,6 @@ echo "mysql dumping database ${DBName} to file ${DBName}.sql: Done"
 echo "Compressing and Archiving files to $backupFileName"
 
 zip -r -q $backupFileName $backupDirectoryName "${DBName}.sql"
-
 if [ ! $? == 0 ]
 then
   echo "Error occur compressing backup to file $backupFileName"
@@ -83,16 +86,18 @@ fi
 echo "Backup compressed to $backupFileName: Done"
 
 # Move to Destination Path
-
 mv $backupFileName $destinationPath
-
-# Congratulations! You completed the final project for this course!
+echo -e "backup file located at $destinationPath/$backupFileName"
+echo "All backup process done"
 
 # remove zipped database file
 rm "${DBName}.sql"
+if [ ! $? == 0 ]
+then
+  echo "Error deleting file ${DBName}.sql"
+  exit 
+fi
 
-echo -e "\nbackup file located at $destinationPath/$backupFileName"
-echo "All backup process done"
 
 
 

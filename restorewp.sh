@@ -65,7 +65,7 @@ cd $archivePath
 archivePath=$(pwd)
 
 # get archive database dump file name
-dbFile=$(unzip -l $archiveFileName | grep .sql | grep -oP '\S+\.sql$') 2>> "error.log"
+dbFile=$(unzip -l $archiveFileName | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> "error.log"
 if [[ -z $dbFile ]]
 then
   if [[ $? == 0 ]]
@@ -78,7 +78,7 @@ then
 fi
 
 # check if extracted archive is a wordpress archive
-WPCONFIG=$(unzip -l $archiveFileName | grep "/wp-config.php") 2>> "error.log"
+WPCONFIG=$(unzip -l $archiveFileName | grep "\/wp-config.php") 2>> "error.log"
 if [[ -z $WPCONFIG ]]
 then
   if [[ $? == 0 ]]
@@ -170,7 +170,7 @@ echo "Importing Database"
 mysql -u $DBUser --password="$DBPass" $DBName < $dbFile 2>> "error.log"
 if [[ ! $? == 0 ]]
 then
-  echo "Error occor while importing database $DBName"
+  echo "Error occor while importing database $DBName from $dbFile"
   exit
 fi
 
