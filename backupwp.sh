@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo -e "root access might be needed if your user is not path owner.\n"
+
 # This checks if the number of arguments is correct
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
 if [[ $# != 2 ]]
@@ -56,29 +58,25 @@ backupDirectoryName=$( echo $targetPath | rev | cut -d "/" -f1 | rev)
 # generate backup file name
 backupFileName="${currentTS}-$backupDirectoryName.zip"
 
-
-
-
-
-echo "Exporting Database ..."
-
 # Export Database to file
-mysqldump -u $DBUser $DBName --password="$DBPass" > "${DBName}.sql" 
-if [ ! $? == 0 ]
+echo "Exporting Database $DBNAme"
+mysqldump -u $DBUser --password=$DBPass $DBName > ${DBName}.sql 2>> error.log
+if [ $? == 0 ]
 then
-  echo "Error occur at mysql dumping database ${DBName} to file ${DBName}.sql"
+  echo "Database $DBName is exported to file ${DBName}.sql."
+else
+  echo "Error occur while dumping database ${DBName} to file ${DBName}.sql"
   exit 
 fi
 
-echo "mysql dumping database ${DBName} to file ${DBName}.sql: Done"
 
 # zip entire directory
-
 echo "Compressing and Archiving files to $backupFileName"
-
-zip -r -q $backupFileName $backupDirectoryName "${DBName}.sql"
-if [ ! $? == 0 ]
+zip -r -q $backupFileName $backupDirectoryName "${DBName}.sql" 2>> error.log
+if [ $? == 0 ]
 then
+  echo "Backup file $backupFileName created."
+else
   echo "Error occur compressing backup to file $backupFileName"
   exit 
 fi
@@ -86,17 +84,29 @@ fi
 echo "Backup compressed to $backupFileName: Done"
 
 # Move to Destination Path
-mv $backupFileName $destinationPath
-echo -e "backup file located at $destinationPath/$backupFileName"
-echo "All backup process done"
+mv $backupFileName $destinationPath 2>> error.log
+if [ $? == 0 ]
+then
+  echo "backup file located at $destinationPath/$backupFileName"
+else
+  echo "Error occur compressing backup to file $backupFileName"
+  exit 
+fi
 
 # remove zipped database file
+echo "Removing no longer needed file"
 rm "${DBName}.sql"
-if [ ! $? == 0 ]
+if [ $? == 0 ]
 then
+  echo "All backup process done"
+else
   echo "Error deleting file ${DBName}.sql"
   exit 
 fi
+
+
+
+
 
 
 

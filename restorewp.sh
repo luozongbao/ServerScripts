@@ -14,7 +14,8 @@ fi
 # Check if run as root
 if (( $EUID != 0 )) 
 then
-	echo "Please run as root"
+	echo "Please run as root."
+  echo "root access is used to create database and database user in this script"
 	exit
 fi
 
@@ -93,8 +94,10 @@ fi
 # Extracting file
 echo "Extracting file $archiveFileName"
 unzip -o -q  $archiveFileName 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Extracted file from archive $archiveFileName."
+else
   echo "Error occor while extracting file"
   exit
 fi
@@ -103,13 +106,14 @@ wordpressFolder=$(echo $WPCONFIG | grep -oP "\S+\/")
 
 # Move folder to destination Path
 mv $wordpressFolder $destinationPath 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "$wordpressFolder moved to $destinationPath."
+else
   echo "Error occor while moving $wordpressFolder to $destinationPath"
   exit
 fi
 
-echo "$wordpressFolder moved to $destinationPath"
 WPDIR="$destinationPath/$wordpressFolder/"
 WPCONFIG="$destinationPath/$wordpressFolder/wp-config.php"
 
@@ -141,8 +145,10 @@ DBPREFIX=$(cat $WPCONFIG | grep "\$table_prefix" | cut -d \' -f 2)
 # Create database
 echo "Creating database $DBName"
 mysql -u root -e "CREATE DATABASE $DBName;" 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Database $DBName created."
+else
   echo "Error occor while creating database"
   exit
 fi
@@ -150,26 +156,32 @@ fi
 # Create username
 echo "Creating database user: $DBUser"
 mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';" 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Database user $DBUser created."
+else
   echo "Error occor while creating database user"
   exit
 fi
 
 # Grant permisssion to the database
-echo "Granting permission to $DBName to database user: $DBUser"
+echo "Granting permission on $DBName to $DBUser"
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;" 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Granted permission on $DBName to $DBuser."
+else
   echo "Error occor while granting permission to $DBName"
   exit
 fi
 
 # Import database
-echo "Importing Database"
+echo "Importing Database $DBName"
 mysql -u $DBUser --password="$DBPass" $DBName < $dbFile 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Imported database from file $dbFile to $DBName."
+else
   echo "Error occor while importing database $DBName from $dbFile"
   exit
 fi
@@ -179,8 +191,10 @@ if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database username in wp-config.php"
   sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG  2>> "error.log"
-  if [[ ! $? == 0 ]]
+  if [[ $? == 0 ]]
   then
+    echo "Configured database user $DBUser to wp-config.php."
+  else
     echo "Error occor while configuring database username"
     exit
   fi
@@ -191,17 +205,20 @@ if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database password in wp-config.php"
   sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG 2>> "error.log"
-  if [[ ! $? == 0 ]]
+  if [[ $? == 0 ]]
   then
+    echo "Configured database password $DBPass to wp-config.php."
+  else
     echo "Error occor while configuring database password"
     exit
   fi
 fi
 
-echo "removing $dbFile"
 rm $dbFile 2>> "error.log"
-if [[ ! $? == 0 ]]
+if [[ $? == 0 ]]
 then
+  echo "Removed imported file $dbFile."
+else
   echo "Error occor while removing $dbFile"
   exit
 fi
@@ -232,13 +249,16 @@ fi
 if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
 then
   rm error.log
-  if [[ ! $? == 0 ]]
+  if [[ $? == 0 ]]
   then
+    echo "No error found."
+  else
     echo "Error occor while removing error.log"
     exit
   fi
 fi
 
+echo "All restore process done."
 
 
 
