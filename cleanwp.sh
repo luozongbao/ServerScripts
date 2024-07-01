@@ -98,5 +98,17 @@ do
     esac
 done
 
+# Remove empty error log file
+if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
+then
+  rm error.log
+  if [[ $? == 0 ]]
+  then
+    echo "Clean wordpress system done with no error"
+  else
+    echo "Error occor while removing error.log"
+    exit
+  fi
+fi
 
 

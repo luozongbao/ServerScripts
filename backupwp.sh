@@ -98,12 +98,26 @@ echo "Removing no longer needed file"
 rm "${DBName}.sql"
 if [ $? == 0 ]
 then
-  echo "All backup process done"
+  # Remove empty error log file
+  if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
+  then
+    rm error.log
+    if [[ $? == 0 ]]
+    then
+      echo "No error found."
+    else
+      echo "Error occor while removing error.log"
+      exit
+    fi
+  else  
+    cat error.log
+  fi
+  
 else
   echo "Error deleting file ${DBName}.sql"
   exit 
 fi
-
+echo "All backup process done"
 
 
 
