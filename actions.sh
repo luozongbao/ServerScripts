@@ -8,10 +8,9 @@
 # Author       	: Atipat Lorwongam                                           
 # Email        	: asecondsun@outlook.com                               
 ###################################################################
-if (( $EUID != 0 )); then
-	echo "Please run as root"
-	exit
-fi
+
+
+cd ~
 
 FILELOC=""
 ORIGINALDIR=""
@@ -1124,7 +1123,29 @@ function CustomMOTD
 
 function CustomPrompt
 {
-    echo "export PS1='{\[$(tput sgr0)\]\[\033[38;5;13m\]\d\t\[$(tput sgr0)\]}@\[$(tput sgr0)\]\[\033[38;5;14m\]\h\[$(tput sgr0)\]:\[$(tput sgr0)\]\[\033[38;5;10m\]\w\[$(tput sgr0)\]\n\[$(tput sgr0)\]\[\033[38;5;11m\]\u\[$(tput sgr0)\] \\$ \[$(tput sgr0)\]'" >> $CURDIR/.bashrc
+    echo 'Installing Function'
+    echo 'git_branch() {' >> $CURDIR/.bashrc
+    echo '  local branch' >> $CURDIR/.bashrc
+    echo '  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)' >> $CURDIR/.bashrc
+    echo '  if [ -n "$branch" ]; then' >> $CURDIR/.bashrc
+    echo '  echo "($branch)"' >> $CURDIR/.bashrc
+    echo 'fi' >> $CURDIR/.bashrc
+    echo '}' >> $CURDIR/.bashrc
+
+    echo 'Declare Color Variables'
+    echo 'BLACK="\[\033[0;30m\]"' >> $CURDIR/.bashrc
+    echo 'RED="\[\033[0;31m\]"' >> $CURDIR/.bashrc
+    echo 'GREEN="\[\033[0;32m\]"' >> $CURDIR/.bashrc
+    echo 'YELLOW="\[\033[0;33m\]"' >> $CURDIR/.bashrc
+    echo 'BLUE="\[\033[01;34m\]"' >> $CURDIR/.bashrc
+    echo 'PURPLE="\[\033[0;35m\]"' >> $CURDIR/.bashrc
+    echo 'CYAN="\[\033[0;36m\]"' >> $CURDIR/.bashrc
+    echo 'WHITE="\[\033[0;37m\]"' >> $CURDIR/.bashrc
+    echo 'RESET="\[\033[0m\]"' >> $CURDIR/.bashrc
+
+    echo "Customizing Prompt"
+    echo 'PS1="${GREEN}\u${WHITE}@${GREEN}\h${WHITE}:${YELLOW}\w${WHITE} \n${CYAN}\D{%Y-%m-%d %H:%M:%S}${WHITE}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
+
     showresult "Created Custom Prompt"
 }
 
@@ -2089,6 +2110,9 @@ function main
 {
     initialize
     clear
+    if (( $EUID != 0 )); then
+        echo "Some task might need root access"
+    fi
     echo
     echo "Make sure you run program in user home directory"
     echo "Current Directory: $PWD"
