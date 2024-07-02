@@ -1136,19 +1136,21 @@ function CustomPrompt
     echo 'Declare Color Variables'
     echo '# Color Variables' >> $CURDIR/.bashrc
     echo 'BLACK="\[\033[0;30m\]"' >> $CURDIR/.bashrc
+    echo 'GREY="\[\033[01;30m\]"' >> $CURDIR/.bashrc
     echo 'RED="\[\033[0;31m\]"' >> $CURDIR/.bashrc
     echo 'GREEN="\[\033[01;32m\]"' >> $CURDIR/.bashrc
     echo 'YELLOW="\[\033[0;33m\]"' >> $CURDIR/.bashrc
     echo 'BLUE="\[\033[01;34m\]"' >> $CURDIR/.bashrc
     echo 'PURPLE="\[\033[0;35m\]"' >> $CURDIR/.bashrc
+    echo 'PINK="\[\033[01;35m\]"' >> $CURDIR/.bashrc
     echo 'CYAN="\[\033[01;36m\]"' >> $CURDIR/.bashrc
     echo 'WHITE="\[\033[0;37m\]"' >> $CURDIR/.bashrc
     echo 'RESET="\[\033[0m\]"' >> $CURDIR/.bashrc
 
     echo "Customizing Prompt"
     echo '# PS1 definition with colors and dynamic Git branch' >> $CURDIR/.bashrc
-    echo 'PS1="${GREEN}\u${WHITE}@${GREEN}\h${WHITE}:${BLUE}\w \n${CYAN}\D{%Y-%m-%d %H:%M:%S}${YELLOW}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
-
+    echo 'PS1="${GREEN}\u${WHITE}@${PINK}\h${WHITE}:${BLUE}\w \n${CYAN}\D{%Y-%m-%d %H:%M:%S}${YELLOW}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
+    echo '# Add other configuration settings below if needed' >> $CURDIR/.bashrc
     showresult "Created Custom Prompt"
 }
 
