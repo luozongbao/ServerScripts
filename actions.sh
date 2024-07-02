@@ -10,8 +10,6 @@
 ###################################################################
 
 
-cd ~
-
 FILELOC=""
 ORIGINALDIR=""
 FILEDIR=""
@@ -20,7 +18,7 @@ DBUSER=""
 DBPASS=""
 DBPREF=""
 URL=""
-CURDIR=$PWD
+CURDIR=$(pwd)
 FINAL=""
 DBFILE=""
 BKFILE=""
@@ -32,8 +30,8 @@ FAILED=""
 WEBSERVER=""
 RGXNUMERIC='^[0-9]+$'
 
-RESULTFILE="$CURDIR/result.txt"
-ERRORFILE="$CURDIR/error.txt"
+RESULTFILE="$CURDIR/result.log"
+ERRORFILE="$CURDIR/error.log"
 
 function initialize
 {
