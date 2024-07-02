@@ -1147,7 +1147,7 @@ function CustomPrompt
 
     echo "Customizing Prompt"
     echo '# PS1 definition with colors and dynamic Git branch' >> $CURDIR/.bashrc
-    echo 'PS1="${GREEN}\u${WHITE}@${GREEN}\h${WHITE}:${BLUE}\w${WHITE} \n${CYAN}\D{%Y-%m-%d %H:%M:%S}${YELLOW}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
+    echo 'PS1="${GREEN}\u${WHITE}@${CYAN}\h${WHITE}:${BLUE}\w \n${WHITE}\D{%Y-%m-%d %H:%M:%S}${YELLOW}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
 
     showresult "Created Custom Prompt"
 }
