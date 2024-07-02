@@ -1,6 +1,11 @@
 #!/bin/bash
 
-echo -e "root access might be needed if your user is not path owner.\n"
+# Check if run as root
+if (( $EUID != 0 )) 
+then
+    echo -e "root access might be needed if your user is not owner of the target file or folder.\n"
+fi
+
 
 # This checks if the number of arguments is correct
 # If the number of arguments is incorrect ( $# != 2) print error message and exit
@@ -36,7 +41,7 @@ WPCONFIG="$targetPath/wp-config.php"
 cd ..
 
 # check if it is wordpress folder
-if [ ! -e $WPCONFIG ]
+if [ ! -f $WPCONFIG ]
 then
   echo "$targetPath is not a wordpress directory"
   exit
