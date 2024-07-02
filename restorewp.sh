@@ -119,12 +119,12 @@ WPCONFIG="$destinationPath/$wordpressFolder/wp-config.php"
 
 
 # acquire databasename
-DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
+DBName=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
 
 if [[ ($# == 2 || $# == 3) ]]
 then
   # acquire database username
-  DBUser=$(cat $WPCONFIG | grep DB_USER | cut -d \' -f 4)
+  DBUser=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
 elif [[ ($# == 4 || $# == 5) ]]
 then
   DBUser=$3
@@ -133,14 +133,14 @@ fi
 if [[ ($# == 2 || $# == 3) ]]
 then
   # acquire database user password
-  DBPass=$(cat $WPCONFIG | grep DB_PASSWORD | cut -d \' -f 4)
+  DBPass=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
 elif [[ ($# == 4 || $# == 5) ]]
 then
   DBPass=$4
 fi
 
 # acquire database Prefix
-DBPREFIX=$(cat $WPCONFIG | grep "\$table_prefix" | cut -d \' -f 2)
+DBPREFIX=$(grep "\$table_prefix" $WPCONFIG | cut -d \' -f 2)
 
 # Create database
 echo "Creating database $DBName"

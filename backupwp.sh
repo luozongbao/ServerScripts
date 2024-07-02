@@ -48,11 +48,11 @@ then
 fi
 
 # acquire database username
-DBUser=$(cat $WPCONFIG | grep DB_USER | cut -d \' -f 4)
+DBUser=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
 # acquire database user password
-DBPass=$(cat $WPCONFIG | grep DB_PASSWORD | cut -d \' -f 4)
+DBPass=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
 # Retrieve Database Name
-DBName=$(cat $WPCONFIG | grep DB_NAME | cut -d \' -f 4)
+DBName=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
 
 # generate timestamp
 currentTS=$(date +%Y%m%d%H%M)

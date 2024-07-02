@@ -34,11 +34,11 @@ then
 fi
 
 # get database name
-DBName=$(cat wp-config.php | grep DB_NAME | cut -d \' -f 4)
+DBName=$(grep DB_NAME wp-config.php | cut -d \' -f 4)
 # get database username
-DBUser=$(cat wp-config.php | grep DB_USER | cut -d \' -f 4)
+DBUser=$(grep DB_USER wp-config.php | cut -d \' -f 4)
 # get database username
-DBPass=$(cat wp-config.php | grep DB_PASSWORD | cut -d \' -f 4)
+DBPass=$(grep DB_PASSWORD wp-config.php | cut -d \' -f 4)
 
 while true;
 do
