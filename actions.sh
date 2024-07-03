@@ -1088,35 +1088,54 @@ function completeURLChanged
 
 function CustomMOTD
 {
-    echo "Updating Server"
-    SUCCESS="Updated Server"
-    FAILED="Update server failed" 
-    apt update -y 2>>$ERRORFILE
-    checkOptional
+    while true;
+    do
+        read -p "Install Custom MOTD? [Y/N]: " MOTD
+        case $MOTD in 
+            [yY]|[yY][eE][sS])
 
-    echo "Installing ScreenFetch"
-    SUCCESS="Installed screenfetch"
-    FAILED="Install screenfetch failed"
-    apt install screenfetch -y 2>> $ERRORFILE
-    checkOptional
+                echo "Updating Server"
+                SUCCESS="Updated Server"
+                FAILED="Update server failed" 
+                apt update -y 2>>$ERRORFILE
+                checkOptional
 
-    echo "#! $(which bash)" > /etc/update-motd.d/motd
-    echo "echo 'GENERAL INFORMATION'" >> /etc/update-motd.d/motd
-    echo "$(which screenfetch)" >> /etc/update-motd.d/motd
+                echo "Installing ScreenFetch"
+                SUCCESS="Installed screenfetch"
+                FAILED="Install screenfetch failed"
+                apt install screenfetch -y 2>> $ERRORFILE
+                checkOptional
 
-    echo "Disabling Old Message of the Day"
-    SUCCESS="Changed Permission to files"
-    FAILED="Change permission to files failed"
-    chmod -x /etc/update-motd.d/*
-    checkOptional
+                echo "#! $(which bash)" > /etc/update-motd.d/motd
+                echo "echo 'GENERAL INFORMATION'" >> /etc/update-motd.d/motd
+                echo "$(which screenfetch)" >> /etc/update-motd.d/motd
 
-    echo "Enable New Message of the Day (MOTD)"
-    SUCCESS="Added execute permission to motd"
-    FAILED="Add execute permission to motd failed"
-    chmod +x /etc/update-motd.d/motd
-    checkOptional
+                echo "Disabling Old Message of the Day"
+                SUCCESS="Changed Permission to files"
+                FAILED="Change permission to files failed"
+                chmod -x /etc/update-motd.d/*
+                checkOptional
 
-    showresult "Created New Message of the day (MOTD)"
+                echo "Enable New Message of the Day (MOTD)"
+                SUCCESS="Added execute permission to motd"
+                FAILED="Add execute permission to motd failed"
+                chmod +x /etc/update-motd.d/motd
+                checkOptional
+
+                showresult "Created New Message of the day (MOTD)"
+                
+                
+                break
+                ;;
+            [nN]|[nN][oO])
+                break
+                ;;
+            *) 
+                echo "Please, answer Yes or No"
+            ;;
+        esac
+    done
+
 }
 
 function CustomPrompt
@@ -1278,6 +1297,42 @@ function ConfigHostName
 
                 showresult "$SUCCESS"
 
+                
+                break
+                ;;
+            [nN]|[nN][oO])
+                break
+                ;;
+            *) 
+                echo "Please, answer Yes or No"
+            ;;
+        esac
+    done
+}
+
+function InstallDocker
+{
+    while true;
+    do
+        read -p "Install Docker? [Y/N]: " Docker
+        case $Docker in 
+            [yY]|[yY][eE][sS])
+
+                sudo apt-get update
+                sudo apt-get install ca-certificates curl
+                sudo install -m 0755 -d /etc/apt/keyrings
+                sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+                sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+                echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                sudo apt-get update
+
+                sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+                sudo usermod -aG docker $USER && su - $USER
                 
                 break
                 ;;
@@ -2139,7 +2194,7 @@ function main
         echo "   PROMPT)      My Custom PROMPT                     Themes)    Manage WP THEMES"
         echo "   Backup)      BACKUP Website                       SiteURL)   Change SITEURL"
         echo "   Restore)     RESTORE Website                      SHOWURL)   SHOWURL"
-        echo "   Remove)      REMOVE Website"
+        echo "   Remove)      REMOVE Website                       Docker)    Install Docker"
         echo "   DBServer)    Install DBSERVER - Mariadb"
         echo "   Webserver)   Install Webserver"
         echo "   Webmin)      Install WEBMIN (Large)"
@@ -2156,6 +2211,11 @@ function main
         echo
         read -p "What is your action?: " ANS
         case $ANS in 
+            [dD][oO][cC][kK][eE][rR])
+                clear
+                display "Install Docker"
+                InstallDocker
+                ;;
             [nN][eE][wW])
                 clear
                 display "Set New server"
