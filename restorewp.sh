@@ -26,6 +26,7 @@ then
   exit
 fi
 
+# Check if WP-CLI is installed
 if [[ ($# == 3 || $# == 5) ]]
 then
   if [[ -z $(ls /usr/local/bin/ | grep -E "^wp$") ]]
