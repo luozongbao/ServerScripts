@@ -6,8 +6,8 @@ if [[ ( $# < 2 || $# > 5 ) ]]
 then
   echo -e "Extract archive to destination using same database information.\n\trestorewp.sh [archive_file] [destination]\n"
   echo -e "Extract archive to destination using same database information then update site url.\n\trestorewp.sh [archive_file] [destination] [newsiteurl]\n"
-  echo -e "Extract archive to destination update database username and password.\n\trestorewp.sh [archive_file] [destination] [dbuser] [dbpassword]\n"
-  echo -e "Extract archive to destination update database username and password then update site url\n\trestorewp.sh [archive_file] [destination] [dbuser] [dbpassword] [newsiteurl]\n"
+  echo -e "Extract archive to destination update database username and password.\n\trestorewp.sh [archive_file] [destination] [DBUSER] [DBPASSword]\n"
+  echo -e "Extract archive to destination update database username and password then update site url\n\trestorewp.sh [archive_file] [destination] [DBUSER] [DBPASSword] [newsiteurl]\n"
   exit
 fi
 
@@ -50,139 +50,139 @@ then
   exit
 fi
 
-fullArchiveFile=$1
-destinationPath=$2
-originPath=$(pwd)
-archivePath=$(dirname $fullArchiveFile)
-archiveFileName=$(basename $fullArchiveFile)
+FULLARCHIVEFILE=$1
+DESTINATIONPATH=$2
+ORIGINPATH=$(pwd)
+ARCHIVEPATH=$(dirname $FULLARCHIVEFILE)
+ARCHIVEFILENAME=$(basename $FULLARCHIVEFILE)
 
 # get destination full path
-cd $destinationPath
-destinationPath=$(pwd)
+cd $DESTINATIONPATH
+DESTINATIONPATH=$(pwd)
 
 # get archive full path
-cd $originPath
-cd $archivePath
-archivePath=$(pwd)
+cd $ORIGINPATH
+cd $ARCHIVEPATH
+ARCHIVEPATH=$(pwd)
 
 # get archive database dump file name
-dbFile=$(unzip -l $archiveFileName | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> "error.log"
-if [[ -z $dbFile ]]
+DBFILE=$(unzip -l $ARCHIVEFILENAME | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> "error.log"
+if [[ -z $DBFILE ]]
 then
   if [[ $? == 0 ]]
   then
     echo "Archive does not include database dump file"
   else
-    echo "could not open $archiveFileName"
+    echo "could not open $ARCHIVEFILENAME"
   fi
   exit
 fi
 
 # check if extracted archive is a wordpress archive
-WPCONFIG=$(unzip -l $archiveFileName | grep "\/wp-config.php") 2>> "error.log"
+WPCONFIG=$(unzip -l $ARCHIVEFILENAME | grep "\/wp-config.php") 2>> "error.log"
 if [[ -z $WPCONFIG ]]
 then
   if [[ $? == 0 ]]
   then
     echo "Could not find wp-config.php"
   else
-    echo "could not open $archiveFileName"
+    echo "could not open $ARCHIVEFILENAME"
   fi
   exit
 fi
 
 # Extracting file
-echo "Extracting file $archiveFileName"
-unzip -o -q  $archiveFileName 2>> "error.log"
+echo "Extracting file $ARCHIVEFILENAME"
+unzip -o -q  $ARCHIVEFILENAME 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Extracted file from archive $archiveFileName."
+  echo "Extracted file from archive $ARCHIVEFILENAME."
 else
   echo "Error occor while extracting file"
   exit
 fi
 
-wordpressFolder=$(echo $WPCONFIG | grep -oP "\S+\/")
+WORDPRESSFOLDER=$(echo $WPCONFIG | grep -oP "\S+\/")
 
 # Move folder to destination Path
-mv $wordpressFolder $destinationPath 2>> "error.log"
+mv $WORDPRESSFOLDER $DESTINATIONPATH 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "$wordpressFolder moved to $destinationPath."
+  echo "$WORDPRESSFOLDER moved to $DESTINATIONPATH."
 else
-  echo "Error occor while moving $wordpressFolder to $destinationPath"
+  echo "Error occor while moving $WORDPRESSFOLDER to $DESTINATIONPATH"
   exit
 fi
 
-WPDIR="$destinationPath/$wordpressFolder/"
-WPCONFIG="$destinationPath/$wordpressFolder/wp-config.php"
+WPDIR="$DESTINATIONPATH/$WORDPRESSFOLDER/"
+WPCONFIG="$DESTINATIONPATH/$WORDPRESSFOLDER/wp-config.php"
 
 
 # acquire databasename
-DBName=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
+DBNAME=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
 
 if [[ ($# == 2 || $# == 3) ]]
 then
   # acquire database username
-  DBUser=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
+  DBUSER=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
 elif [[ ($# == 4 || $# == 5) ]]
 then
-  DBUser=$3
+  DBUSER=$3
 fi
 
 if [[ ($# == 2 || $# == 3) ]]
 then
   # acquire database user password
-  DBPass=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
+  DBPASS=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
 elif [[ ($# == 4 || $# == 5) ]]
 then
-  DBPass=$4
+  DBPASS=$4
 fi
 
 # acquire database Prefix
 DBPREFIX=$(grep "\$table_prefix" $WPCONFIG | cut -d \' -f 2)
 
 # Create database
-echo "Creating database $DBName"
-mysql -u root -e "CREATE DATABASE $DBName;" 2>> "error.log"
+echo "Creating database $DBNAME"
+mysql -u root -e "CREATE DATABASE $DBNAME;" 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Database $DBName created."
+  echo "Database $DBNAME created."
 else
   echo "Error occor while creating database"
   exit
 fi
 
 # Create username
-echo "Creating database user: $DBUser"
-mysql -u root -e "CREATE USER $DBUser IDENTIFIED BY '$DBPass';" 2>> "error.log"
+echo "Creating database user: $DBUSER"
+mysql -u root -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Database user $DBUser created."
+  echo "Database user $DBUSER created."
 else
   echo "Error occor while creating database user"
   exit
 fi
 
 # Grant permisssion to the database
-echo "Granting permission on $DBName to $DBUser"
-mysql -u root -e "GRANT ALL PRIVILEGES ON $DBName.* TO $DBUser;" 2>> "error.log"
+echo "Granting permission on $DBNAME to $DBUSER"
+mysql -u root -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Granted permission on $DBName to $DBuser."
+  echo "Granted permission on $DBNAME to $DBUSER."
 else
-  echo "Error occor while granting permission to $DBName"
+  echo "Error occor while granting permission to $DBNAME"
   exit
 fi
 
 # Import database
-echo "Importing Database $DBName"
-mysql -u $DBUser --password="$DBPass" $DBName < $dbFile 2>> "error.log"
+echo "Importing Database $DBNAME"
+mysql -u $DBUSER --password="$DBPASS" $DBNAME < $DBFILE 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Imported database from file $dbFile to $DBName."
+  echo "Imported database from file $DBFILE to $DBNAME."
 else
-  echo "Error occor while importing database $DBName from $dbFile"
+  echo "Error occor while importing database $DBNAME from $DBFILE"
   exit
 fi
 
@@ -190,10 +190,10 @@ fi
 if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database username in wp-config.php"
-  sed -i "/DB_USER/s/'[^']*'/'$DBUser'/2" $WPCONFIG  2>> "error.log"
+  sed -i "/DB_USER/s/'[^']*'/'$DBUSER'/2" $WPCONFIG  2>> "error.log"
   if [[ $? == 0 ]]
   then
-    echo "Configured database user $DBUser to wp-config.php."
+    echo "Configured database user $DBUSER to wp-config.php."
   else
     echo "Error occor while configuring database username"
     exit
@@ -204,41 +204,41 @@ fi
 if [[ ($# == 4 || $# == 5) ]]
 then
   echo "Configuring database password in wp-config.php"
-  sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPass'/2" $WPCONFIG 2>> "error.log"
+  sed -i "/DB_PASSWORD/s/'[^']*'/'$DBPASS'/2" $WPCONFIG 2>> "error.log"
   if [[ $? == 0 ]]
   then
-    echo "Configured database password $DBPass to wp-config.php."
+    echo "Configured database password $DBPASS to wp-config.php."
   else
     echo "Error occor while configuring database password"
     exit
   fi
 fi
 
-rm $dbFile 2>> "error.log"
+rm $DBFILE 2>> "error.log"
 if [[ $? == 0 ]]
 then
-  echo "Removed imported file $dbFile."
+  echo "Removed imported file $DBFILE."
 else
-  echo "Error occor while removing $dbFile"
+  echo "Error occor while removing $DBFILE"
   exit
 fi
 
 # Configure Site URL
 # Get current site URL
-#originalURL=$(sudo wp option get siteurl --path=$WPDIR --allow-root)
+#ORIGINALURL=$(sudo wp option get siteurl --path=$WPDIR --allow-root)
 QUERY="SELECT option_value FROM ${DBPREFIX}options WHERE option_id=1;"
-originalURL=$(mysql -u $DBUser $DBName -p$DBPass -e "$QUERY")  2>> "error.log"
-originalURL=$(echo $originalURL | grep -oP '\s(.*)$')
-echo "current site url is: $originalURL"
+ORIGINALURL=$(mysql -u $DBUSER $DBNAME -p$DBPASS -e "$QUERY")  2>> "error.log"
+ORIGINALURL=$(echo $ORIGINALURL | grep -oP '\s(.*)$')
+echo "current site url is: $ORIGINALURL"
 
-if [[ ($# == 3) ]]; then newURL=$3; fi
-if [[ ($# == 5) ]]; then newURL=$5; fi
-if [[ ! -z $newURL ]]
+if [[ ($# == 3) ]]; then NEWURL=$3; fi
+if [[ ($# == 5) ]]; then NEWURL=$5; fi
+if [[ ! -z $NEWURL ]]
 then
-  wp search-replace $originalURL $newURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
+  wp search-replace $ORIGINALURL $NEWURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
   if [[ $? == 0 ]]
   then
-    echo "site url changed to $newURL"
+    echo "site url changed to $NEWURL"
   else 
     echo "Error occor while configuring site url"
     exit

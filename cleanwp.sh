@@ -22,9 +22,9 @@ then
   exit
 fi
 
-originPath=$(pwd)
+ORIGINPATH=$(pwd)
 cd $1
-wpPath=$(pwd)
+WPPATH=$(pwd)
 
 # check if extracted archive is a wordpress archive
 if [[ ! -e wp-config.php ]]
@@ -34,32 +34,32 @@ then
 fi
 
 # get database name
-DBName=$(grep DB_NAME wp-config.php | cut -d \' -f 4)
+DBNAME=$(grep DB_NAME wp-config.php | cut -d \' -f 4)
 # get database username
-DBUser=$(grep DB_USER wp-config.php | cut -d \' -f 4)
+DBUSER=$(grep DB_USER wp-config.php | cut -d \' -f 4)
 # get database username
-DBPass=$(grep DB_PASSWORD wp-config.php | cut -d \' -f 4)
+DBPASS=$(grep DB_PASSWORD wp-config.php | cut -d \' -f 4)
 
 while true;
 do
-    read -p "This will delete database:$DBName database user:$DBUser, continue? [Y/N]: " Choice
-    case $Choice in 
+    read -p "This will delete database:$DBNAME database user:$DBUSER, continue? [Y/N]: " CHOICE
+    case $CHOICE in 
         [yY]|[yY][eE][sS])
             # Drop database
-            mysql -u root -e "DROP DATABASE $DBName;" 2>> error.log
+            mysql -u root -e "DROP DATABASE $DBNAME;" 2>> error.log
             if [[ $? == 0 ]]
             then
-                echo "Database $DBName dropped."
+                echo "Database $DBNAME dropped."
             else
-                echo "Error occur while dropping database $DBName"
+                echo "Error occur while dropping database $DBNAME"
             fi
             # drop database user
-            mysql -u root -e "DROP USER $DBUser;" 2>> error.log
+            mysql -u root -e "DROP USER $DBUSER;" 2>> error.log
             if [[ $? == 0 ]]
             then
-                echo "Database user $DBUser dropped."
+                echo "Database user $DBUSER dropped."
             else
-                echo "Error occur while dropping database user $DBUser"
+                echo "Error occur while dropping database user $DBUSER"
             fi
             break
             ;;
@@ -75,17 +75,17 @@ done
 
 while true;
 do
-    read -p "This will delete wordpress folder $wpPath , continue? [Y/N]: " Choice
-    case $Choice in 
+    read -p "This will delete wordpress folder $WPPATH , continue? [Y/N]: " CHOICE
+    case $CHOICE in 
         [yY]|[yY][eE][sS])
-            cd $wpPath
+            cd $WPPATH
             cd ..
-            rm -r $wpPath 2>> error.log
+            rm -r $WPPATH 2>> error.log
             if [[ $? == 0 ]]
             then
-                echo "Directory $wpPath deleted."
+                echo "Directory $WPPATH deleted."
             else
-                echo "Error occur while deleting path $wpPath"
+                echo "Error occur while deleting path $WPPATH"
             fi
             break
             ;;

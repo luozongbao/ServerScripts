@@ -23,84 +23,84 @@ then
 fi
 
 # define directory
-targetDirectory=$1
-destinationDirectory=$2
+TARGETDIRECTORY=$1
+DESTINATIONDIRECTORY=$2
 
 # getting original path
-originalPath=$(pwd)
+ORIGINALPATH=$(pwd)
 
 # define destiantion path
-cd $destinationDirectory
-destinationPath=$(pwd)
+cd $DESTINATIONDIRECTORY
+DESTINATIONPATH=$(pwd)
 
 # define target path
-cd $originalPath
-cd $targetDirectory
-targetPath=$(pwd)
-WPCONFIG="$targetPath/wp-config.php"
+cd $ORIGINALPATH
+cd $TARGETDIRECTORY
+TARGETPATH=$(pwd)
+WPCONFIG="$TARGETPATH/wp-config.php"
 cd ..
 
 # check if it is wordpress folder
 if [ ! -f $WPCONFIG ]
 then
-  echo "$targetPath is not a wordpress directory"
+  echo "$TARGETPATH is not a wordpress directory"
   exit
 fi
 
 # acquire database username
-DBUser=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
+DBUSER=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
 # acquire database user password
-DBPass=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
+DBPASS=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
 # Retrieve Database Name
-DBName=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
+DBNAME=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
 
 # generate timestamp
-currentTS=$(date +%Y%m%d%H%M)
+CURRENTTS=$(date +%Y%m%d%H%M)
 
 # get Backup Directory Name
-backupDirectoryName=$( echo $targetPath | rev | cut -d "/" -f1 | rev)
+BACKUPDIRECTORYNAME=$( echo $TARGETPATH | rev | cut -d "/" -f1 | rev)
 
 # generate backup file name
-backupFileName="${currentTS}-$backupDirectoryName.zip"
+BACKUPFILENAME="${CURRENTTS}-$BACKUPDIRECTORYNAME.zip"
 
 # Export Database to file
-echo "Exporting Database $DBNAme"
-mysqldump -u $DBUser --password=$DBPass $DBName > ${DBName}.sql 2>> error.log
+echo "Exporting Database $DBNAME"
+mysqldump -u $DBUSER --password=$DBPASS $DBNAME > ${DBNAME}.sql 2>> error.log
 if [ $? == 0 ]
 then
-  echo "Database $DBName is exported to file ${DBName}.sql."
+  echo "Database $DBNAME is exported to file ${DBNAME}.sql."
 else
-  echo "Error occur while dumping database ${DBName} to file ${DBName}.sql"
+  echo "Error occur while dumping database ${DBNAME} to file ${DBNAME}.sql"
   exit 
 fi
 
 
 # zip entire directory
-echo "Compressing and Archiving files to $backupFileName"
-zip -r -q $backupFileName $backupDirectoryName "${DBName}.sql" 2>> error.log
+echo "Compressing and Archiving files to $BACKUPFILENAME"
+zip -r -q $BACKUPFILENAME $BACKUPDIRECTORYNAME "${DBNAME}.sql" 2>> error.log
 if [ $? == 0 ]
 then
-  echo "Backup file $backupFileName created."
+  echo "Backup file $BACKUPFILENAME created."
 else
-  echo "Error occur compressing backup to file $backupFileName"
+  echo "Error occur compressing backup to file $BACKUPFILENAME"
   exit 
 fi
 
-echo "Backup compressed to $backupFileName: Done"
+echo "Backup compressed to $BACKUPFILENAME: Done"
 
 # Move to Destination Path
-mv $backupFileName $destinationPath 2>> error.log
+mv $BACKUPFILENAME $DESTINATIONPATH 2>> error.log
 if [ $? == 0 ]
 then
-  echo "backup file located at $destinationPath/$backupFileName"
+  echo "backup file located at $DESTINATIONPATH/$BACKUPFILENAME"
 else
-  echo "Error occur compressing backup to file $backupFileName"
+  echo "Error occur compressing backup to file $BACKUPFILENAME"
   exit 
 fi
 
 # remove zipped database file
 echo "Removing no longer needed file"
-rm "${DBName}.sql"
+rm "${DBNAME}.sql"
 if [ $? == 0 ]
 then
   # Remove empty error log file
@@ -119,7 +119,7 @@ then
   fi
   
 else
-  echo "Error deleting file ${DBName}.sql"
+  echo "Error deleting file ${DBNAME}.sql"
   exit 
 fi
 echo "All backup process done"
