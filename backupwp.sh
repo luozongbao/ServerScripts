@@ -1,132 +1,188 @@
 #!/bin/bash
 
-# Check if run as root
-if (( $EUID != 0 )) 
-then
-    echo -e "root access might be needed if your user is not owner of the target file or folder.\n"
-fi
+WORKINGPATH=$(pwd)
+TIMESTAMP=$(date +%Y%m%d%H%M)
+ERRORLOG="$WORKINGPATH/${TIMESTAMP}-error.log"
+WORDPRESSPATH=''
+DESTINATIONPATH=''
+WPCONFIG=''
+DBUSER=''
+DBPASS=''
+DBNAME=''
+DBHOST=''
 
+WORDPRESSDIRECTORYNAME=''
+BACKUPFILENAME=''
 
-# This checks if the number of arguments is correct
-# If the number of arguments is incorrect ( $# != 2) print error message and exit
-if [[ $# != 2 ]]
-then
-  echo "backupwp.sh [target_directory_name] [destination_directory_name]"
-  exit
-fi
+help(){
+    echo "-w <wordpress> : define wordpress path to be backup"
+    echo "-d <destination> : define backup storage path"
+}
 
-# This checks if argument 1 and argument 2 are valid directory paths
-if [[ ! -d $1 ]] || [[ ! -d $2 ]]
-then
-  echo "Invalid directory path provided"
-  exit
-fi
+accquireDatabaseInformation(){
+    # acquire database username
+    DBUSER=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
+    # acquire database user password
+    DBPASS=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
+    # Retrieve Database Name
+    DBNAME=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
+    # Retrieve Database host
+    DBHOST=$(grep DB_HOST $WPCONFIG | cut -d \' -f 4)
 
-# define directory
-TARGETDIRECTORY=$1
-DESTINATIONDIRECTORY=$2
+}
 
-# getting original path
-ORIGINALPATH=$(pwd)
+workingVariable(){
+    # get Backup Directory Name
+    WORDPRESSDIRECTORYNAME=$( echo $WORDPRESSPATH | rev | cut -d "/" -f1 | rev)
+    # generate backup file name
+    BACKUPFILENAME="${TIMESTAMP}-$WORDPRESSDIRECTORYNAME.zip"
+}
 
-# define destiantion path
-cd $DESTINATIONDIRECTORY
-DESTINATIONPATH=$(pwd)
+displayVariables(){
+    echo "Database Name: $DBNAME"
+    echo "Database User: $DBUSER"
+    echo "Database Host: $DBHOST"
+    echo "Database Pass: $DBPASS"
+}
 
-# define target path
-cd $ORIGINALPATH
-cd $TARGETDIRECTORY
-TARGETPATH=$(pwd)
-WPCONFIG="$TARGETPATH/wp-config.php"
-cd ..
-
-# check if it is wordpress folder
-if [ ! -f $WPCONFIG ]
-then
-  echo "$TARGETPATH is not a wordpress directory"
-  exit
-fi
-
-# acquire database username
-DBUSER=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
-# acquire database user password
-DBPASS=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
-# Retrieve Database Name
-DBNAME=$(grep DB_NAME $WPCONFIG | cut -d \' -f 4)
-
-# generate timestamp
-CURRENTTS=$(date +%Y%m%d%H%M)
-
-# get Backup Directory Name
-BACKUPDIRECTORYNAME=$( echo $TARGETPATH | rev | cut -d "/" -f1 | rev)
-
-# generate backup file name
-BACKUPFILENAME="${CURRENTTS}-$BACKUPDIRECTORYNAME.zip"
-
-# Export Database to file
-echo "Exporting Database $DBNAME"
-mysqldump -u $DBUSER --password=$DBPASS $DBNAME > ${DBNAME}.sql 2>> error.log
-if [ $? == 0 ]
-then
-  echo "Database $DBNAME is exported to file ${DBNAME}.sql."
-else
-  echo "Error occur while dumping database ${DBNAME} to file ${DBNAME}.sql"
-  exit 
-fi
-
-
-# zip entire directory
-echo "Compressing and Archiving files to $BACKUPFILENAME"
-zip -r -q $BACKUPFILENAME $BACKUPDIRECTORYNAME "${DBNAME}.sql" 2>> error.log
-if [ $? == 0 ]
-then
-  echo "Backup file $BACKUPFILENAME created."
-else
-  echo "Error occur compressing backup to file $BACKUPFILENAME"
-  exit 
-fi
-
-echo "Backup compressed to $BACKUPFILENAME: Done"
-
-# Move to Destination Path
-mv $BACKUPFILENAME $DESTINATIONPATH 2>> error.log
-if [ $? == 0 ]
-then
-  echo "backup file located at $DESTINATIONPATH/$BACKUPFILENAME"
-else
-  echo "Error occur compressing backup to file $BACKUPFILENAME"
-  exit 
-fi
-
-# remove zipped database file
-echo "Removing no longer needed file"
-rm "${DBNAME}.sql"
-if [ $? == 0 ]
-then
-  # Remove empty error log file
-  if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
-  then
-    rm error.log
-    if [[ $? == 0 ]]
+exportDatabase(){
+    # Export Database to file
+    echo "Exporting Database $DBNAME"
+    mysqldump -h $DBHOST -u $DBUSER --password="$DBPASS" $DBNAME > ${DBNAME}.sql 2>> $ERRORLOG
+    if [ $? == 0 ]
     then
-      echo "No error found."
+        echo "Database $DBNAME is exported to file ${DBNAME}.sql."
     else
-      echo "Error occor while removing error.log"
-      exit
+        echo "Error occur while dumping database ${DBNAME} to file ${DBNAME}.sql"
+        exit 
     fi
-  else  
-    cat error.log
-  fi
-  
-else
-  echo "Error deleting file ${DBNAME}.sql"
-  exit 
+}
+
+ownerBackup(){
+    stat -c '%U:%G' $WORDPRESSPATH > owner.txt
+}
+
+archivingFiles(){
+    # zip entire directory
+    echo "Compressing and Archiving files to $BACKUPFILENAME"
+    # zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" owner.txt 2>> $ERRORLOG
+    zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" 2>> $ERRORLOG
+    if [ $? == 0 ]
+    then
+        echo "Backup file $BACKUPFILENAME created."
+    else
+        echo "Error occur compressing backup to file $BACKUPFILENAME"
+        exit 
+    fi
+}
+
+moveArchivetoDestination(){
+    # Move to Destination Path
+
+    if [[ -z $DESTINATIONPATH ]]; then DESTINATIONPATH=$WORKINGPATH; fi
+
+    mv $BACKUPFILENAME $DESTINATIONPATH 2>> $ERRORLOG
+    if [ $? == 0 ]
+    then
+        echo "backup file located at $DESTINATIONPATH/$BACKUPFILENAME"
+    else
+        echo "Error occur compressing backup to file $BACKUPFILENAME"
+        exit 
+    fi
+}
+
+removeUnnecessaryFiles(){
+    # remove zipped database file
+    echo "Removing no longer needed file"
+    # rm owner.txt 2>> $ERRORLOG
+    rm "${DBNAME}.sql" 2>> $ERRORLOG
+    if [ $? != 0 ]
+    then
+        echo "Error deleting file ${DBNAME}.sql"
+        exit 
+    fi
+
+    # Remove empty error log file
+    if [[ ($(wc -c $ERRORLOG | cut -d " " -f 1) == 0) ]]
+    then
+        rm $ERRORLOG
+        if [[ $? == 0 ]]
+        then
+            echo "No error found."
+        else
+            echo "Error occor while removing $ERRORLOG"
+            exit
+        fi
+    else
+        echo -e "\nError during processes\n*******************"
+        cat $ERRORLOG
+    fi
+
+}
+
+main(){
+    cd $WORKINGPATH
+    accquireDatabaseInformation
+    workingVariable
+    cd $WORDPRESSPATH
+    cd ..
+    # displayVariables
+    exportDatabase
+    # ownerBackup
+    archivingFiles
+    moveArchivetoDestination
+    removeUnnecessaryFiles
+    echo "All backup process done"
+}
+
+if [ -z "${1}" ]; then
+    help
+    exit 1
 fi
-echo "All backup process done"
+while [ ! -z "${1}" ]; do
+    case ${1} in
+        -[wW] | -wordpress | --wordpress) shift
+            if [ -z "${1}" ]; then
+                echo "missing define wordpress directory"
+                exit 1
+            fi
+            WORDPRESSPATH="${1}"
+            cd $WORKINGPATH
+            if [ ! -d $WORDPRESSPATH ]
+            then
+                echo "Invalid wordpress path provided"
+                exit
+            fi 
+            cd $WORDPRESSPATH
+            WORDPRESSPATH=$(pwd)
+            WPCONFIG="$WORDPRESSPATH/wp-config.php"
+            if [ ! -f $WPCONFIG ]
+            then
+                echo "wp-config.php notfound at $WPCONFIG"
+                exit
+            fi 
+            ;;   
+        -[dD] | -destination | --destination) shift
+            if [ -z "${1}" ]; then
+                echo "missing define destination directory"
+                exit 1
+            fi
+            DESTINATIONPATH="${1}"
+            cd $WORKINGPATH
+            if [ ! -d $DESTINATIONPATH ]
+            then
+                echo "Invalid destination path provided"
+                exit
+            fi 
+            cd $DESTINATIONPATH
+            DESTINATIONPATH=$(pwd)
+            ;;          
+        *) 
+            help
+            exit 1
+            ;;              
+    esac
+    shift
+done
 
-
-
-
-
-
-
+main

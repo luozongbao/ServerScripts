@@ -1,11 +1,13 @@
 #!/bin/bash
 
+WORKINGPATH=$(pwd)
+TIMESTAMP=$(date +%Y%m%d%H%M)
+ERRORLOG="$WORKINGPATH/${TIMESTAMP}-error.log"
 ARCHIVEFILE=''
 DESTINATIONPATH=''
 DBHOST=''
 MYSQLROOTPASSWORD=''
 NEWURL=''
-WORKINGPATH=$(pwd)
 ARCHIVEPATH=''
 ARCHIVEFILENAME=''
 DBFILE=''
@@ -17,7 +19,6 @@ DBUSER=''
 DBPASS=''
 DBPREFIX=''
 ORIGINALURL=''
-ERRORLOG="$WORKINGPATH/error.log"
 
 help(){
     echo "-a <archive>: define archive to be extracted and resotre"
@@ -82,7 +83,11 @@ extractArchive(){
 movePath(){
     # Move folder to destination Path
     cd $ARCHIVEPATH
+    
+    if [[ -z $DESTINATIONPATH ]]; then DESTINATIONPATH=$WORKINGPATH; fi
+
     mv $WORDPRESSFOLDER $DESTINATIONPATH 2>> $ERRORLOG
+    
     if [[ $? == 0 ]]
     then
         echo "$WORDPRESSFOLDER moved to $DESTINATIONPATH."
@@ -160,7 +165,7 @@ workDatabase(){
 workDatabaseOnDBHost(){
     # Create database
     echo "Creating database $DBNAME"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE DATABASE $DBNAME;" 2>> $ERRORLOG
+    mysql -h $DBHOST -u root --password="$MYSQLROOTPASSWORD" -e "CREATE DATABASE $DBNAME;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database $DBNAME created."
@@ -171,7 +176,7 @@ workDatabaseOnDBHost(){
 
     # Create username
     echo "Creating database user: $DBUSER"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> $ERRORLOG
+    mysql -h $DBHOST -u root --password="$MYSQLROOTPASSWORD" -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database user $DBUSER created."
@@ -182,7 +187,7 @@ workDatabaseOnDBHost(){
 
     # Grant permisssion to the database
     echo "Granting permission on $DBNAME to $DBUSER"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> $ERRORLOG
+    mysql -h $DBHOST -u root --password="$MYSQLROOTPASSWORD" -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Granted permission on $DBNAME to $DBUSER."
@@ -251,9 +256,9 @@ updateURL(){
 
 removeEmptyErrorLogFile(){
     # Remove empty error log file
-    if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
+    if [[ ($(wc -c $ERRORLOG | cut -d " " -f 1) == 0) ]]
     then
-        rm error.log
+        rm $ERRORLOG
         if [[ $? == 0 ]]
         then
             echo "No error found."
@@ -261,6 +266,9 @@ removeEmptyErrorLogFile(){
             echo "Error occor while removing error.log"
             exit
         fi
+    else
+        echo -e "\nError during processes\n*******************"
+        cat $ERRORLOG
     fi
 }
 
@@ -276,10 +284,7 @@ main(){
         extractArchive
     fi
 
-    if [[ ! -z $DESTINATIONPATH ]]
-    then
-        movePath
-    fi
+    movePath
 
     accquireDatabaseInformation
 
@@ -386,12 +391,12 @@ while [ ! -z "${1}" ]; do
 done
 
 # Check if run as root
-if (( $EUID != 0 )) 
-then
-    echo "Please run as root."
-    echo "root access is used to create database and database user in this script"
-    exit
-fi
+# if [ $(cat owner.txt | cut -d ':' -f 1) != $(whoami) && $EUID != 0 ]
+# then
+#     echo "Please run as root."
+#     echo "root access is used to create database and database user in this script"
+#     exit
+# fi
 
 # Check if mysql is installed
 if [[ -z $(command -v mysql) ]]

@@ -1,7 +1,8 @@
 #! /bin/bash
 
 WORKINGPATH=$(pwd)
-ERRORLOG="$WORKINGPATH/error.log"
+TIMESTAMP=$(date +%Y%m%d%H%M)
+ERRORLOG="$WORKINGPATH/${TIMESTAMP}-error.log"
 MYSQLROOTPASSWORD=''
 WORDPRESSPATH=''
 DBNAME=''
@@ -15,6 +16,13 @@ help(){
     echo "-r <password> : if mysql root password is needed should be defined using this option"
 }
 
+checkAuthorities(){
+    if [[ $(stat -c '%U' $WORDPRESSPATH) != $(whoami)  &&  $EUID != 0 ]]
+    then
+        echo "Files are not owned by you root access (or sudo) is needed."
+        exit 
+    fi
+}
 
 checkForWpconfig(){
     # check if extracted archive is a wordpress archive
@@ -136,7 +144,7 @@ deleteWordpress(){
 
 removeEmptyErrorLogFile(){
     # Remove empty error log file
-    if [[ ($(wc -c $ERRORLOG | grep -oP "\d") == 0) ]]
+    if [[ ($(wc -c $ERRORLOG | cut -d " " -f 1) == 0) ]]
     then
         rm $ERRORLOG
         if [[ $? == 0 ]]
@@ -146,10 +154,14 @@ removeEmptyErrorLogFile(){
             echo "Error occor while removing $ERRORLOG"
             exit
         fi
+    else
+        echo -e "\nError during processes\n*******************"
+        cat $ERRORLOG
     fi
 }
 
 main(){
+    checkAuthorities
     cd $WORDPRESSPATH
     checkForWpconfig
     getDatabaseInformation

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 WORKINGPATH=$(pwd)
-ERRORLOG="$WORKINGPATH/error.log"
+TIMESTAMP=$(date +%Y%m%d%H%M)
+ERRORLOG="$WORKINGPATH/${TIMESTAMP}-error.log"
 WORDPRESSPATH=''
 DESTINATIONPATH=''
 WPCONFIG=''
@@ -9,7 +10,7 @@ DBUSER=''
 DBPASS=''
 DBNAME=''
 DBHOST=''
-TIMESTAMP=$(date +%Y%m%d%H%M)
+
 WORDPRESSDIRECTORYNAME=''
 BACKUPFILENAME=''
 
@@ -57,9 +58,14 @@ exportDatabase(){
     fi
 }
 
+ownerBackup(){
+    stat -c '%U:%G' $WORDPRESSPATH > owner.txt
+}
+
 archivingFiles(){
     # zip entire directory
     echo "Compressing and Archiving files to $BACKUPFILENAME"
+    # zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" owner.txt 2>> $ERRORLOG
     zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" 2>> $ERRORLOG
     if [ $? == 0 ]
     then
@@ -72,6 +78,9 @@ archivingFiles(){
 
 moveArchivetoDestination(){
     # Move to Destination Path
+
+    if [[ -z $DESTINATIONPATH ]]; then DESTINATIONPATH=$WORKINGPATH; fi
+
     mv $BACKUPFILENAME $DESTINATIONPATH 2>> $ERRORLOG
     if [ $? == 0 ]
     then
@@ -85,27 +94,28 @@ moveArchivetoDestination(){
 removeUnnecessaryFiles(){
     # remove zipped database file
     echo "Removing no longer needed file"
+    # rm owner.txt 2>> $ERRORLOG
     rm "${DBNAME}.sql" 2>> $ERRORLOG
-    if [ $? == 0 ]
+    if [ $? != 0 ]
     then
-        # Remove empty error log file
-        if [[ ($(wc -c $ERRORLOG | grep -oP "\d") == 0) ]]
-        then
-            rm $ERRORLOG
-            if [[ $? == 0 ]]
-            then
-                echo "No error found."
-            else
-                echo "Error occor while removing $ERRORLOG"
-                exit
-            fi
-        else
-            cat $ERRORLOG
-        fi
-    
-    else
         echo "Error deleting file ${DBNAME}.sql"
         exit 
+    fi
+
+    # Remove empty error log file
+    if [[ ($(wc -c $ERRORLOG | cut -d " " -f 1) == 0) ]]
+    then
+        rm $ERRORLOG
+        if [[ $? == 0 ]]
+        then
+            echo "No error found."
+        else
+            echo "Error occor while removing $ERRORLOG"
+            exit
+        fi
+    else
+        echo -e "\nError during processes\n*******************"
+        cat $ERRORLOG
     fi
 
 }
@@ -116,8 +126,9 @@ main(){
     workingVariable
     cd $WORDPRESSPATH
     cd ..
-    displayVariables
+    # displayVariables
     exportDatabase
+    # ownerBackup
     archivingFiles
     moveArchivetoDestination
     removeUnnecessaryFiles
