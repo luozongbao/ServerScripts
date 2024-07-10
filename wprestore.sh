@@ -402,6 +402,7 @@ done
 if [[ -z $(command -v mysql) ]]
 then
     echo "mysql is not installed"
+    echo "system should at least have mysql client installed in order for script to connect to external database."
     exit
 fi
 
