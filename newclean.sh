@@ -1,12 +1,20 @@
 #! /bin/bash
 
-WORKINGPATH=''
+WORKINGPATH=$(pwd)
+ERRORLOG="$WORKINGPATH/error.log"
 MYSQLROOTPASSWORD=''
 WORDPRESSPATH=''
 DBNAME=''
 DBPASS=''
 DBHOST=''
 DBUSER=''
+
+help(){
+    echo "-d <directory> : define wordpress directory to be removed"
+    echo "-h <host> : define mysql host or IP address"
+    echo "-r <password> : if mysql root password is needed should be defined using this option"
+}
+
 
 checkForWpconfig(){
     # check if extracted archive is a wordpress archive
@@ -25,7 +33,10 @@ getDatabaseInformation(){
     # get database username
     DBPASS=$(grep DB_PASSWORD wp-config.php | cut -d \' -f 4)
     # get database username
-    DBHOST=$(grep DB_HOST wp-config.php | cut -d \' -f 4)
+    if [ -z $DBHOST ]
+    then
+        DBHOST=$(grep DB_HOST wp-config.php | cut -d \' -f 4)
+    fi
 }
 
 dropDatabase(){
@@ -35,7 +46,7 @@ dropDatabase(){
         case $CHOICE in 
             [yY]|[yY][eE][sS])
                 # Drop database
-                mysql -u root -e "DROP DATABASE $DBNAME;" 2>> error.log
+                mysql -u root -e "DROP DATABASE $DBNAME;" 2>> $ERRORLOG
                 if [[ $? == 0 ]]
                 then
                     echo "Database $DBNAME dropped."
@@ -43,7 +54,7 @@ dropDatabase(){
                     echo "Error occur while dropping database $DBNAME"
                 fi
                 # drop database user
-                mysql -u root -e "DROP USER $DBUSER;" 2>> error.log
+                mysql -u root -e "DROP USER $DBUSER;" 2>> $ERRORLOG
                 if [[ $? == 0 ]]
                 then
                     echo "Database user $DBUSER dropped."
@@ -69,20 +80,20 @@ dropDatabaseOnHost(){
         case $CHOICE in 
             [yY]|[yY][eE][sS])
                 # Drop database
-                mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "DROP DATABASE $DBNAME;" 2>> error.log
+                mysql -h $DBHOST -u root --password="$MYSQLROOTPASSWORD" -e "DROP DATABASE $DBNAME;" 2>> $ERRORLOG
                 if [[ $? == 0 ]]
                 then
                     echo "Database $DBNAME dropped."
                 else
-                    echo "Error occur while dropping database $DBNAME"
+                    echo "Error occur while dropping database $DBNAME on host $DBHOST"
                 fi
                 # drop database user
-                mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "DROP USER $DBUSER;" 2>> error.log
+                mysql -h $DBHOST -u root --password="$MYSQLROOTPASSWORD" -e "DROP USER $DBUSER;" 2>> $ERRORLOG
                 if [[ $? == 0 ]]
                 then
                     echo "Database user $DBUSER dropped."
                 else
-                    echo "Error occur while dropping database user $DBUSER"
+                    echo "Error occur while dropping database user $DBUSER on host $DBHOST"
                 fi
                 break
                 ;;
@@ -104,7 +115,7 @@ deleteWordpress(){
             [yY]|[yY][eE][sS])
                 cd $WORDPRESSPATH
                 cd ..
-                rm -r $WORDPRESSPATH 2>> error.log
+                rm -r $WORDPRESSPATH 2>> $ERRORLOG
                 if [[ $? == 0 ]]
                 then
                     echo "Directory $WORDPRESSPATH deleted."
@@ -125,14 +136,14 @@ deleteWordpress(){
 
 removeEmptyErrorLogFile(){
     # Remove empty error log file
-    if [[ ($(wc -c error.log | grep -oP "\d") == 0) ]]
+    if [[ ($(wc -c $ERRORLOG | grep -oP "\d") == 0) ]]
     then
-        rm error.log
+        rm $ERRORLOG
         if [[ $? == 0 ]]
         then
             echo "Clean wordpress system done with no error"
         else
-            echo "Error occor while removing error.log"
+            echo "Error occor while removing $ERRORLOG"
             exit
         fi
     fi
@@ -183,6 +194,13 @@ while [ ! -z "${1}" ]; do
             cd $WORDPRESSPATH
             WORDPRESSPATH=$(pwd)
             ;;   
+        -[hH] | -host | --host) shift
+            if [ -z "${1}" ]; then
+                echo "missing define mysql host or IP address"
+                exit 1
+            fi
+            DBHOST="${1}"
+            ;;     
         -[rR] | -rootpassword | --rootpassword) shift
             if [ -z "${1}" ]; then
                 echo "missing define root password"

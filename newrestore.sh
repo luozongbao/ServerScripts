@@ -17,9 +17,14 @@ DBUSER=''
 DBPASS=''
 DBPREFIX=''
 ORIGINALURL=''
+ERRORLOG="$WORKINGPATH/error.log"
 
 help(){
-    echo "help"
+    echo "-a <archive>: define archive to be extracted and resotre"
+    echo "-d <directory>: define a directory extracted archive folder should be in"
+    echo "-h <hostname>: define mysql hostname or IP address if needed"
+    echo "-r <password>: mysql client root password is needed when using mysql on other host"
+    echo "-u <url>: define new site url (this option will not work if wp-cli has not been installed)"
 }
 
 echovalues(){
@@ -32,7 +37,7 @@ echovalues(){
 
 checkArchive(){
     # get archive database dump file name
-    DBFILE=$(unzip -l $ARCHIVEFILENAME | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> "error.log"
+    DBFILE=$(unzip -l $ARCHIVEFILENAME | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> $ERRORLOG
     if [[ -z $DBFILE ]]
     then
         if [[ $? == 0 ]]
@@ -45,7 +50,7 @@ checkArchive(){
     fi
 
     # check if extracted archive is a wordpress archive
-    WPCONFIG=$(unzip -l $ARCHIVEFILENAME | grep "\/wp-config.php") 2>> "error.log"
+    WPCONFIG=$(unzip -l $ARCHIVEFILENAME | grep "\/wp-config.php") 2>> $ERRORLOG
     if [[ -z $WPCONFIG ]]
     then
         if [[ $? == 0 ]]
@@ -62,7 +67,7 @@ checkArchive(){
 extractArchive(){
     # Extracting file
     echo "Extracting file $ARCHIVEFILENAME"
-    unzip -o -q  $ARCHIVEFILENAME 2>> "error.log"
+    unzip -o -q  $ARCHIVEFILENAME 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Extracted file from archive $ARCHIVEFILENAME."
@@ -77,7 +82,7 @@ extractArchive(){
 movePath(){
     # Move folder to destination Path
     cd $ARCHIVEPATH
-    mv $WORDPRESSFOLDER $DESTINATIONPATH 2>> "error.log"
+    mv $WORDPRESSFOLDER $DESTINATIONPATH 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "$WORDPRESSFOLDER moved to $DESTINATIONPATH."
@@ -98,17 +103,17 @@ accquireDatabaseInformation(){
     DBPASS=$(grep DB_PASSWORD $WPCONFIG | cut -d \' -f 4)
     # acquire database Prefix
     DBPREFIX=$(grep "\$table_prefix" $WPCONFIG | cut -d \' -f 2)
-    if [ -z $DBHOST ]
-    then
-        # acquire database Host
-        DBHOST=$(grep DB_HOST $WPCONFIG | cut -d \' -f 4)
-    fi 
+    # if [ -z $DBHOST ]
+    # then
+    #     # acquire database Host
+    #     DBHOST=$(grep DB_HOST $WPCONFIG | cut -d \' -f 4)
+    # fi 
 }
 
 workDatabase(){
     # Create database
     echo "Creating database $DBNAME"
-    mysql -u root -e "CREATE DATABASE $DBNAME;" 2>> "error.log"
+    mysql -u root -e "CREATE DATABASE $DBNAME;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database $DBNAME created."
@@ -119,7 +124,7 @@ workDatabase(){
 
     # Create username
     echo "Creating database user: $DBUSER"
-    mysql -u root -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> "error.log"
+    mysql -u root -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database user $DBUSER created."
@@ -130,7 +135,7 @@ workDatabase(){
 
     # Grant permisssion to the database
     echo "Granting permission on $DBNAME to $DBUSER"
-    mysql -u root -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> "error.log"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Granted permission on $DBNAME to $DBUSER."
@@ -141,7 +146,7 @@ workDatabase(){
 
     # Import database
     echo "Importing Database $DBNAME"
-    mysql -u $DBUSER --password="$DBPASS" $DBNAME < $DBFILE 2>> "error.log"
+    mysql -u $DBUSER --password="$DBPASS" $DBNAME < $DBFILE 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Imported database from file $DBFILE to $DBNAME."
@@ -155,7 +160,7 @@ workDatabase(){
 workDatabaseOnDBHost(){
     # Create database
     echo "Creating database $DBNAME"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE DATABASE $DBNAME;" 2>> "error.log"
+    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE DATABASE $DBNAME;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database $DBNAME created."
@@ -166,7 +171,7 @@ workDatabaseOnDBHost(){
 
     # Create username
     echo "Creating database user: $DBUSER"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> "error.log"
+    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "CREATE USER $DBUSER IDENTIFIED BY '$DBPASS';" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Database user $DBUSER created."
@@ -177,7 +182,7 @@ workDatabaseOnDBHost(){
 
     # Grant permisssion to the database
     echo "Granting permission on $DBNAME to $DBUSER"
-    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> "error.log"
+    mysql -h $DBHOST -u root -p$MYSQLROOTPASSWORD -e "GRANT ALL PRIVILEGES ON $DBNAME.* TO $DBUSER;" 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Granted permission on $DBNAME to $DBUSER."
@@ -188,7 +193,7 @@ workDatabaseOnDBHost(){
 
     # Import database
     echo "Importing Database $DBNAME"
-    mysql -h $DBHOST -u $DBUSER --password="$DBPASS" $DBNAME < $DBFILE 2>> "error.log"
+    mysql -h $DBHOST -u $DBUSER --password="$DBPASS" $DBNAME < $DBFILE 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Imported database from file $DBFILE to $DBNAME."
@@ -201,7 +206,7 @@ workDatabaseOnDBHost(){
 }
 
 removeImportedDatabaseFile(){
-    rm $DBFILE 2>> "error.log"
+    rm $DBFILE 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Removed imported file $DBFILE."
@@ -212,8 +217,8 @@ removeImportedDatabaseFile(){
 }
 
 configWpconfig(){
-    echo "Configuring database password in wp-config.php"
-    sed -i "/DB_DBHOST/s/'[^']*'/'$DBHOST'/2" $WPCONFIG 2>> "error.log"
+    echo "Configuring database host in wp-config.php"
+    sed -i "/DB_HOST/s/'[^']*'/'$DBHOST'/2" $WPCONFIG 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "Configured database host $DBHOST to wp-config.php."
@@ -224,18 +229,17 @@ configWpconfig(){
 }
 
 currentURL(){
-    # Configure Site URL
     # Get current site URL
-    #ORIGINALURL=$(sudo wp option get siteurl --path=$WPDIR --allow-root)
     QUERY="SELECT option_value FROM ${DBPREFIX}options WHERE option_id=1;"
-    ORIGINALURL=$(mysql -h $DBHOST -u $DBUSER $DBNAME -p$DBPASS -e "$QUERY")  2>> "error.log"
+    ORIGINALURL=$(mysql -h $DBHOST -u $DBUSER $DBNAME -p$DBPASS -e "$QUERY")  2>> $ERRORLOG
     ORIGINALURL=$(echo $ORIGINALURL | grep -oP '\s(.*)$')
     echo "current site url is: $ORIGINALURL"
 
 }
 
 updateURL(){
-    wp search-replace $ORIGINALURL $NEWURL --path=$WPDIR --all-tables --allow-root 2>> "error.log"
+    # Update site URL
+    wp search-replace $ORIGINALURL $NEWURL --path=$WPDIR --all-tables --allow-root 2>> $ERRORLOG
     if [[ $? == 0 ]]
     then
         echo "site url updated to $NEWURL"
@@ -279,7 +283,7 @@ main(){
 
     accquireDatabaseInformation
 
-    if [[ $(echo $DBHOST | tr '[:lower:]' '[:upper:]') == "LOCALHOST"  ]]
+    if [[ $(echo $DBHOST | tr '[:lower:]' '[:upper:]') == "LOCALHOST" || -z $DBHOST ]]
     then
         workDatabase
         removeImportedDatabaseFile
@@ -303,6 +307,8 @@ main(){
     else
         updateURL
     fi
+
+    removeEmptyErrorLogFile
 
     echo "All restore process done."
 
