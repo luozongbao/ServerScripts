@@ -19,6 +19,14 @@ help(){
     echo "-d <destination> : define backup storage path"
 }
 
+checkAuthorities(){
+    if [[ $(stat -c '%U' $WPCONFIG) != $(whoami)  &&  $EUID != 0 ]]
+    then
+        echo "Files are not owned by you root access (or sudo) is needed."
+        exit 
+    fi
+}
+
 accquireDatabaseInformation(){
     # acquire database username
     DBUSER=$(grep DB_USER $WPCONFIG | cut -d \' -f 4)
@@ -122,6 +130,7 @@ removeUnnecessaryFiles(){
 
 main(){
     cd $WORKINGPATH
+    checkAuthorities
     accquireDatabaseInformation
     workingVariable
     cd $WORDPRESSPATH
