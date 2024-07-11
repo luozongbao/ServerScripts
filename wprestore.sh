@@ -236,7 +236,8 @@ configWpconfig(){
 currentURL(){
     # Get current site URL
     QUERY="SELECT option_value FROM ${DBPREFIX}options WHERE option_id=1;"
-    ORIGINALURL=$(mysql -h $DBHOST -u $DBUSER $DBNAME -p$DBPASS -e "$QUERY")  2>> $ERRORLOG
+    if [ -z $DBHOST ]; then DBHOST="localhost"; fi
+    ORIGINALURL=$(mysql -h $DBHOST -u $DBUSER --password="$DBPASS" -e "$QUERY" $DBNAME)  2>> $ERRORLOG
     ORIGINALURL=$(echo $ORIGINALURL | grep -oP '\s(.*)$')
     echo "current site url is: $ORIGINALURL"
 
@@ -305,11 +306,10 @@ main(){
     fi 
 
 
+    currentURL
 
-    if [[ -z $NEWURL ]]
+    if [[ ! -z $NEWURL ]]
     then
-        currentURL
-    else
         updateURL
     fi
 
