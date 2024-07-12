@@ -291,8 +291,17 @@ main(){
 
     if [[ $(echo $DBHOST | tr '[:lower:]' '[:upper:]') == "LOCALHOST" || -z $DBHOST ]]
     then
-        workDatabase
-        removeImportedDatabaseFile
+        if [ -z $MYSQLROOTPASSWORD ]
+        then
+            workDatabase
+            removeImportedDatabaseFile
+        else
+            DBHOST="localhost"
+            workDatabaseOnDBHost
+            removeImportedDatabaseFile
+            configWpconfig
+        fi
+
     else
         if [ -z $MYSQLROOTPASSWORD ]
         then
@@ -391,12 +400,12 @@ while [ ! -z "${1}" ]; do
 done
 
 # Check if run as root
-# if [ $(cat owner.txt | cut -d ':' -f 1) != $(whoami) && $EUID != 0 ]
-# then
-#     echo "Please run as root."
-#     echo "root access is used to create database and database user in this script"
-#     exit
-# fi
+if [[ $(stat -c '%U' $DESTINATIONPATH) != $(whoami)  &&  $EUID != 0 ]]
+then
+    echo "Please run as root."
+    echo "moving files to folder that you do not own"
+    exit
+fi
 
 # Check if mysql is installed
 if [[ -z $(command -v mysql) ]]
