@@ -19,6 +19,9 @@ Script for new server including
 1. run command
 ```bash
 wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/actions.sh
+wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/wpbackup.sh
+wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/wpclean.sh
+wget https://raw.githubusercontent.com/luozongbao/ServerScripts/main/wprestore.sh
 ```
 2. make the file executable
 ```bash
