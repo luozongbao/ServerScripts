@@ -46,13 +46,6 @@ workingVariable(){
     BACKUPFILENAME="${TIMESTAMP}-$WORDPRESSDIRECTORYNAME.zip"
 }
 
-displayVariables(){
-    echo "Database Name: $DBNAME"
-    echo "Database User: $DBUSER"
-    echo "Database Host: $DBHOST"
-    echo "Database Pass: $DBPASS"
-}
-
 exportDatabase(){
     # Export Database to file
     echo "Exporting Database $DBNAME"
@@ -64,17 +57,22 @@ exportDatabase(){
         echo "Error occur while dumping database ${DBNAME} to file ${DBNAME}.sql"
         exit 
     fi
-}
 
-ownerBackup(){
-    stat -c '%U:%G' $WORDPRESSPATH > owner.txt
+    zip ${DBNAME}.sql.zip ${DBNAME}.sql 2>> $ERRORLOG
+    if [ $? == 0 ]
+    then
+        echo "${DBNAME}.sql compressed to ${DBNAME}.sql.zip."
+    else
+        echo "Error occur compress file ${DBNAME}.sql."
+        exit 
+    fi
 }
 
 archivingFiles(){
     # zip entire directory
     echo "Compressing and Archiving files to $BACKUPFILENAME"
-    # zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" owner.txt 2>> $ERRORLOG
-    zip -r -q $BACKUPFILENAME $WORDPRESSDIRECTORYNAME "${DBNAME}.sql" 2>> $ERRORLOG
+
+    zip -r -q $BACKUPFILENAME ${WORDPRESSDIRECTORYNAME} "${DBNAME}.sql.zip" 2>> $ERRORLOG
     if [ $? == 0 ]
     then
         echo "Backup file $BACKUPFILENAME created."
@@ -110,6 +108,13 @@ removeUnnecessaryFiles(){
         exit 
     fi
 
+    rm "${DBNAME}.sql.zip" 2>> $ERRORLOG
+    if [ $? != 0 ]
+    then
+        echo "Error deleting file ${DBNAME}.sql.zip"
+        exit 
+    fi
+
     # Remove empty error log file
     if [[ ($(wc -c $ERRORLOG | cut -d " " -f 1) == 0) ]]
     then
@@ -135,9 +140,7 @@ main(){
     workingVariable
     cd $WORDPRESSPATH
     cd ..
-    # displayVariables
     exportDatabase
-    # ownerBackup
     archivingFiles
     moveArchivetoDestination
     removeUnnecessaryFiles

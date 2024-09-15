@@ -38,7 +38,7 @@ echovalues(){
 
 checkArchive(){
     # get archive database dump file name
-    DBFILE=$(unzip -l $ARCHIVEFILENAME | grep ".sql" | grep -oP "\S+\.sql$" | grep -oP "^[^\s\/]+\.sql$") 2>> $ERRORLOG
+    DBFILE=$(unzip -l $ARCHIVEFILENAME | grep ".sql.zip" | grep -oP "\S+\.sql.zip$" | grep -oP "^[^\s\/]+\.sql.zip$") 2>> $ERRORLOG
     if [[ -z $DBFILE ]]
     then
         if [[ $? == 0 ]]
