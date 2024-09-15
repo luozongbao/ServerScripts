@@ -4,7 +4,7 @@
 # Description	: Script to set new server                                                                 
 # Args         	:               
 # Date          : 20210205
-# Version       : 1.0                                                                                
+# Version       : 2.0                                                                                
 # Author       	: Atipat Lorwongam                                           
 # Email        	: asecondsun@outlook.com                               
 ###################################################################
@@ -1140,35 +1140,53 @@ function CustomMOTD
 
 function CustomPrompt
 {
-    echo 'Installing Function'
-    echo '# Function to get the current git branch' >> $CURDIR/.bashrc
-    echo 'git_branch() {' >> $CURDIR/.bashrc
-    echo '  local branch' >> $CURDIR/.bashrc
-    echo '  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)' >> $CURDIR/.bashrc
-    echo '  if [ -n "$branch" ]; then' >> $CURDIR/.bashrc
-    echo '  echo "($branch)"' >> $CURDIR/.bashrc
-    echo 'fi' >> $CURDIR/.bashrc
-    echo '}' >> $CURDIR/.bashrc
+    while true;
+    do
+        read -p "Install Custom Prompt? [Y/N]: " CUSTOMPROMPT
+        case $CUSTOMPROMPT in 
+            [yY]|[yY][eE][sS])
 
-    echo 'Declare Color Variables'
-    echo '# Color Variables' >> $CURDIR/.bashrc
-    echo 'BLACK="\[\033[0;30m\]"' >> $CURDIR/.bashrc
-    echo 'GREY="\[\033[01;30m\]"' >> $CURDIR/.bashrc
-    echo 'RED="\[\033[0;31m\]"' >> $CURDIR/.bashrc
-    echo 'GREEN="\[\033[01;32m\]"' >> $CURDIR/.bashrc
-    echo 'YELLOW="\[\033[0;33m\]"' >> $CURDIR/.bashrc
-    echo 'BLUE="\[\033[01;34m\]"' >> $CURDIR/.bashrc
-    echo 'PURPLE="\[\033[0;35m\]"' >> $CURDIR/.bashrc
-    echo 'PINK="\[\033[01;35m\]"' >> $CURDIR/.bashrc
-    echo 'CYAN="\[\033[01;36m\]"' >> $CURDIR/.bashrc
-    echo 'WHITE="\[\033[0;37m\]"' >> $CURDIR/.bashrc
-    echo 'RESET="\[\033[0m\]"' >> $CURDIR/.bashrc
+                echo 'Installing Function'
+                echo '# Function to get the current git branch' >> $CURDIR/.bashrc
+                echo 'git_branch() {' >> $CURDIR/.bashrc
+                echo '  local branch' >> $CURDIR/.bashrc
+                echo '  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)' >> $CURDIR/.bashrc
+                echo '  if [ -n "$branch" ]; then' >> $CURDIR/.bashrc
+                echo '  echo "($branch)"' >> $CURDIR/.bashrc
+                echo 'fi' >> $CURDIR/.bashrc
+                echo '}' >> $CURDIR/.bashrc
 
-    echo "Customizing Prompt"
-    echo '# PS1 definition with colors and dynamic Git branch' >> $CURDIR/.bashrc
-    echo 'PS1="${GREEN}\u${WHITE}@${PINK}\h${WHITE}:${BLUE}\w \n${YELLOW}\D{%Y-%m-%d %H:%M:%S}${CYAN}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
-    echo '# Add other configuration settings below if needed' >> $CURDIR/.bashrc
-    showresult "Created Custom Prompt"
+                echo 'Declare Color Variables'
+                echo '# Color Variables' >> $CURDIR/.bashrc
+                echo 'BLACK="\[\033[0;30m\]"' >> $CURDIR/.bashrc
+                echo 'GREY="\[\033[01;30m\]"' >> $CURDIR/.bashrc
+                echo 'RED="\[\033[0;31m\]"' >> $CURDIR/.bashrc
+                echo 'GREEN="\[\033[01;32m\]"' >> $CURDIR/.bashrc
+                echo 'YELLOW="\[\033[0;33m\]"' >> $CURDIR/.bashrc
+                echo 'BLUE="\[\033[01;34m\]"' >> $CURDIR/.bashrc
+                echo 'PURPLE="\[\033[0;35m\]"' >> $CURDIR/.bashrc
+                echo 'PINK="\[\033[01;35m\]"' >> $CURDIR/.bashrc
+                echo 'CYAN="\[\033[01;36m\]"' >> $CURDIR/.bashrc
+                echo 'WHITE="\[\033[0;37m\]"' >> $CURDIR/.bashrc
+                echo 'RESET="\[\033[0m\]"' >> $CURDIR/.bashrc
+
+                echo "Customizing Prompt"
+                echo '# PS1 definition with colors and dynamic Git branch' >> $CURDIR/.bashrc
+                echo 'PS1="${GREEN}\u${WHITE}@${PINK}\h${WHITE}:${BLUE}\w \n${YELLOW}\D{%Y-%m-%d %H:%M:%S}${CYAN}\$(git_branch)${RESET}\$ "' >> $CURDIR/.bashrc
+                echo '# Add other configuration settings below if needed' >> $CURDIR/.bashrc
+                showresult "Created Custom Prompt"
+                
+                break
+                ;;
+            [nN]|[nN][oO])
+                break
+                ;;
+            *) 
+                echo "Please, answer Yes or No"
+            ;;
+        esac
+    done
+
 }
 
 function installswap
