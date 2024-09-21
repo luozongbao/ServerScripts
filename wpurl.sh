@@ -122,7 +122,7 @@ while [ ! -z "${1}" ]; do
                 echo "define url missing"
                 exit 1
             fi
-            URL=$(echo "${1}" | grep -oP "(https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})*")
+            URL=$(echo "${1}" | grep -oP "(https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})+")
             if [ -z $URL ]
             then
                 echo "invalid URL."
