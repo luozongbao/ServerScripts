@@ -62,9 +62,23 @@ RetrieveURL(){
 
     URLCOMMAND="SELECT option_value FROM ${DBPREF}options WHERE option_id=1;"
     # echo $URLCOMMAND
-    ORIGINALURL=$(mysql -u $ORIGINALUSR --password="$ORIGINALPASS" -e "$URLCOMMAND" $ORIGINALDB) 
+    # ORIGINALURL=$(mysql -u $ORIGINALUSR --password="$ORIGINALPASS" -e "$URLCOMMAND" $ORIGINALDB) 
+    ORIGINALURL=$(mysql -u root -e "$URLCOMMAND" $ORIGINALDB)
     ORIGINALURL=$(echo $ORIGINALURL | grep -oP '\s(.*)$'| xargs)
     echo "SYSTEM URL: $ORIGINALURL"
+}
+
+ChangeURL(){
+    if [ ! -z $URL ]
+    then
+        wp search-replace $ORIGINALURL $URL --all-tables --path="$WORDPRESSPATH" --allow-root
+        if [ $? == 0 ]
+        then
+
+            echo "URL Changed to: $URL"
+
+        fi 
+    fi
 }
 
 main(){
@@ -74,17 +88,8 @@ main(){
     RetrieveDatabaseUser
     RetrieveTablePrefix
     RetrieveURL
+    ChangeURL
 
-    if [ ! -z $URL ]
-    then
-        wp search-replace $ORIGINALURL $URL --all-tables --path="$WORDPRESSPATH"
-        if [ $? == 0 ]
-        then
-
-            echo "URL Changed to: $URL"
-
-        fi 
-    fi
 
 
 }
@@ -117,13 +122,11 @@ while [ ! -z "${1}" ]; do
                 echo "define url missing"
                 exit 1
             fi
-            URL=$(echo "${1}" | grep -oP "(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?")
+            URL=$(echo "${1}" | grep -oP "(https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})*")
             if [ -z $URL ]
             then
                 echo "invalid URL."
                 exit 1
-            else
-                echo $URL
             fi
 
             ;;          
